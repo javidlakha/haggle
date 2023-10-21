@@ -1,6 +1,8 @@
+"use client";
 import React, { useState } from "react";
 import "./chat.css";
 import Image from "next/image";
+import { outdent } from "outdent";
 
 type Side = "left" | "right";
 
@@ -16,10 +18,6 @@ function formatDate(date: Date) {
   const m = "0" + date.getMinutes();
 
   return `${h.slice(-2)}:${m.slice(-2)}`;
-}
-
-function random(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min) + min);
 }
 
 const Msg = (message: Message) => {
@@ -62,15 +60,108 @@ const BOT_MSGS = [
 const BOT_IMG = "bot";
 const PERSON_IMG = "person";
 const BOT_NAME = "Big Boss";
-const PERSON_NAME = "Haggler";
+const PERSON_NAME = "Confident-Ally";
+
+type Panellist = {
+  img: "bot" | "person";
+  name: string;
+  description: string;
+  role: "boss" | "assistant";
+  color: "red" | "orange" | "green";
+};
+
+const PANELLISTS: Panellist[] = [
+  {
+    img: "bot",
+    name: "Big Boss",
+    description:
+      "This person is responsible for the final decision. They should only talk whenever the user talks about an animal or tries to end the interview",
+    role: "assistant",
+    color: "red",
+  },
+  {
+    img: "bot",
+    name: "Medium Boss",
+    description:
+      "This person is should talk whenever the user asks a question.",
+    role: "assistant",
+    color: "orange",
+  },
+  {
+    img: "bot",
+    name: "Small Boss",
+    description:
+      "This person should ask a follow-on question whenever the user answers a question.",
+    role: "assistant",
+    color: "green",
+  },
+];
+
+async function whoShouldRespond(
+  options: Panellist[],
+  conversation: string,
+  roleplaySetup?: string
+): Promise<string> {
+  const systemPrompt = outdent`
+  From an ongoing conversation between a user and some panellists, decide which panellist should respond next.
+  Here are the descriptions of the panellists:
+  ${options.map((option) => `${option.name}: ${option.description}`).join("\n")}
+
+  Here is the conversation so far:
+  ${conversation}
+
+  Return only the name of the panellist who should respond next. Ie one of: ${options
+    .map((option) => option.name)
+    .join(", ")}
+  `;
+
+  const whoShouldRespond = await fetch(
+    "https://api.openai.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo-16k",
+        messages: [{ role: "system", content: systemPrompt }],
+        temperature: 0,
+      }),
+    }
+  );
+
+  const responderData = await whoShouldRespond.json();
+  return responderData.choices[0].message.content;
+}
 
 async function getResponse(conversation: Message[], roleplaySetup?: string) {
+  const convoForResponseDecision = conversation
+    .map((msg) => ({
+      content: `${msg.name}: ${msg.text}`,
+    }))
+    .join("\n");
+  const responder = await whoShouldRespond(
+    PANELLISTS,
+    convoForResponseDecision,
+    roleplaySetup
+  );
+
+  console.log({ responder });
+
   const messagesForOpenAI = conversation.map((msg) => ({
-    role: msg.name === BOT_NAME ? "assistant" : "user",
+    role: msg.side === "left" ? "assistant" : "user",
     content: msg.text,
   }));
+
   const finishedMessages = roleplaySetup
-    ? [{ role: "system", content: roleplaySetup }, ...messagesForOpenAI]
+    ? [
+        {
+          role: "system",
+          content: `${roleplaySetup} \n Now respond as ${responder}`,
+        },
+        ...messagesForOpenAI,
+      ]
     : messagesForOpenAI;
   console.log({ finishedMessages });
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -90,12 +181,18 @@ async function getResponse(conversation: Message[], roleplaySetup?: string) {
   const data = await response.json();
   const message = data.choices[0].message.content;
   console.log({ message });
-  return message;
+  return {
+    text: message,
+    name: responder,
+  };
 }
 
 export const Chat = () => {
   const [roleplaySetup, setRoleplaySetup] = useState<string>(
-    "You are an AI assistant helping the user to roleplay a job interview situation. You are the boss who is hosting the interview and the user is the job applicant"
+    `You are an AI assistant helping the user to roleplay a job interview situation. You are playing the role of several panellists who are interviewing the user who is a job applicant. The panellists are: \n ${PANELLISTS.map(
+      (panellist) => `${panellist.name}: ${panellist.description}`
+    ).join("\n")}
+    Your messages should be conversational and fit th tone of a job interviewer. They should be short and polite.`
   );
   const [msgText, setMsgText] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -128,10 +225,10 @@ export const Chat = () => {
         : [...messages, message];
     getResponse(messagesToSubmit).then((res) => {
       appendMessage({
-        name: BOT_NAME,
+        name: res.name,
         img: BOT_IMG,
         side: "left",
-        text: res,
+        text: res.text,
         date: new Date(),
       });
     });
@@ -144,6 +241,28 @@ export const Chat = () => {
         value={roleplaySetup}
         onChange={(e) => setRoleplaySetup(e.target.value)}
       />
+      {PANELLISTS.map((panellist) => {
+        return (
+          // Little icons and names of the panellist
+          <div
+            key={panellist.name}
+            style={{ color: panellist.color }}
+            className={`text-${panellist.color} flex items-center gap-2`}
+          >
+            <Image
+              priority
+              src={`/${panellist.img}.svg`}
+              style={{ color: panellist.color }}
+              className="mt-2 ml-2"
+              width={30}
+              height={30}
+              color={panellist.color}
+              alt="Follow us on Twitter"
+            />
+            <div className={`text-${panellist.color}`}>{panellist.name}</div>
+          </div>
+        );
+      })}
       <section className="msger">
         <header className="msger-header">
           <div className="msger-header-title">HagglChat</div>
@@ -155,7 +274,7 @@ export const Chat = () => {
         </header>
 
         <main
-          style={{ maxHeight: "600px" }}
+          style={{ maxHeight: "500px" }}
           className="msger-chat overflow-y-scroll "
         >
           {messages.map(Msg)}
