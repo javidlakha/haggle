@@ -3,6 +3,7 @@
 
 from enum import Enum, unique
 from fastapi import FastAPI, UploadFile
+from fastapi.responses import FileResponse
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
 from pydantic import BaseModel
@@ -80,3 +81,13 @@ async def transcribe_voice_endpoint(recording: UploadFile):
 @app.post("/api/upload-voice")
 async def upload_voice_endpoint(recording: UploadFile):
     recording_path = save_recording(await recording.read())
+
+
+# TODO: Remove?
+@app.post("/api/italian-parrot")
+async def transcribe_voice_endpoint(recording: UploadFile):
+    """Repeats what you say, but in an Italian accent"""
+    recording_path = save_recording(await recording.read())
+    transcript = speech_to_text(recording_path)
+    response_path = text_to_speech(transcript, Accent.italian, 0, 1)
+    return FileResponse(response_path, media_type="audio/mp3")
