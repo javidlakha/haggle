@@ -88,17 +88,19 @@ export const Chat = () => {
 
 
   return (
-    <section className="msger max-h-80%">
+    <section className="msger">
   <header className="msger-header">
     <div className="msger-header-title">
-      <i className="fas fa-comment-alt"></i> HagglChat
+      HagglChat
     </div>
     <div className="msger-header-options">
       <span><i className="fas fa-cog"></i></span>
     </div>
   </header>
 
-  <main className="msger-chat overflow-y-scroll max-h-100px">
+  <main 
+  style={{maxHeight: '600px'}} 
+  className="msger-chat overflow-y-scroll ">
     {messages.map(Msg)}
   </main>
 
@@ -112,7 +114,7 @@ export const Chat = () => {
     
       botResponse();
   }}>
-    <input type="text" className="msger-input" placeholder="Enter your message..." value={msgText} onChange={(e) => setMsgText(e.target.value)}/>
+    <input type="text" className="msger-input text-black" placeholder="Enter your message..." value={msgText} onChange={(e) => setMsgText(e.target.value)}/>
     <button type="submit" className="msger-send-btn">Send</button>
   </form>
 </section>
