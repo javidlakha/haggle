@@ -62,14 +62,14 @@ const BOT_MSGS = [
 
 const BOT_IMG = 'bot';
 const PERSON_IMG = "person";
-const BOT_NAME = "BOT";
-const PERSON_NAME = "Sajad";
+const BOT_NAME = "Big Boss";
+const PERSON_NAME = "Haggler";
 
 export const Chat = () => {
   const [msgText , setMsgText] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    {name: BOT_NAME, img: BOT_IMG, side: "left", text:"Hi, how are you?"},
-    {name: PERSON_NAME, img: PERSON_IMG, side: "right", text:"I'm fine, thanks!"},
+    {name: BOT_NAME, img: BOT_IMG, side: "left", text:"Hi, welcome to this job interview?"},
+    {name: PERSON_NAME, img: PERSON_IMG, side: "right", text:"Thanks, I'm super ready to go! Let me start"},
   ]);
 
   function appendMessage(message: Message) {
