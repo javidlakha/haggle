@@ -1,24 +1,24 @@
-import React, { useState } from "react";
-import "./chat.css";
-import Image from "next/image";
+import React, { useState } from "react"
+import "./chat.css"
+import Image from "next/image"
 
-type Side = "left" | "right";
+type Side = "left" | "right"
 
 type Message = {
-  name: string;
-  img: "bot" | "person";
-  side: Side;
-  text: string;
-};
+  name: string
+  img: "bot" | "person"
+  side: Side
+  text: string
+}
 function formatDate(date: Date) {
-  const h = "0" + date.getHours();
-  const m = "0" + date.getMinutes();
+  const h = "0" + date.getHours()
+  const m = "0" + date.getMinutes()
 
-  return `${h.slice(-2)}:${m.slice(-2)}`;
+  return `${h.slice(-2)}:${m.slice(-2)}`
 }
 
 function random(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min) + min);
+  return Math.floor(Math.random() * (max - min) + min)
 }
 
 const Msg = (message: Message) => {
@@ -47,8 +47,8 @@ const Msg = (message: Message) => {
         <div className="msg-text">{message.text}</div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const BOT_MSGS = [
   "Hi, how are you?",
@@ -56,15 +56,15 @@ const BOT_MSGS = [
   "I like to play games... But I don't know how to play!",
   "Sorry if my answers are not relevant. :))",
   "I feel sleepy! :(",
-];
+]
 
-const BOT_IMG = "bot";
-const PERSON_IMG = "person";
-const BOT_NAME = "Big Boss";
-const PERSON_NAME = "Haggler";
+const BOT_IMG = "bot"
+const PERSON_IMG = "person"
+const BOT_NAME = "Big Boss"
+const PERSON_NAME = "Haggler"
 
 export const Chat = () => {
-  const [msgText, setMsgText] = useState("");
+  const [msgText, setMsgText] = useState("")
   const [messages, setMessages] = useState<Message[]>([
     {
       name: BOT_NAME,
@@ -78,27 +78,27 @@ export const Chat = () => {
       side: "right",
       text: "Thanks, I'm super ready to go! Let me start",
     },
-  ]);
+  ])
 
   function appendMessage(message: Message) {
-    setMessages((prev) => [...prev, message]);
+    setMessages((prev) => [...prev, message])
   }
 
   async function botResponse(message: string) {
     try {
-      const response = await fetch('/api/chat.submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message }),
-    });
-    if (!response.ok) {
-      throw new Error('Network response was not ok ' + response.statusText);
-    }
-    const data = await response.json();
-    const msgText = data.message;
-    const delay = msgText.split(" ").length * 100;
+      const response = await fetch("/api/chat.submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message }),
+      })
+      if (!response.ok) {
+        throw new Error("Network response was not ok " + response.statusText)
+      }
+      const data = await response.json()
+      const msgText = data.message
+      const delay = msgText.split(" ").length * 100
 
       setTimeout(() => {
         appendMessage({
@@ -106,13 +106,10 @@ export const Chat = () => {
           img: BOT_IMG,
           side: "left",
           text: msgText,
-        });
-      }, delay);
+        })
+      }, delay)
     } catch (error) {
-      console.error(
-        "There has been a problem with your fetch operation:",
-        error
-      );
+      console.error("There has been a problem with your fetch operation:", error)
     }
   }
 
@@ -127,29 +124,26 @@ export const Chat = () => {
         </div>
       </header>
 
-      <main
-        style={{ maxHeight: "600px" }}
-        className="msger-chat overflow-y-scroll "
-      >
+      <main style={{ maxHeight: "600px" }} className="msger-chat overflow-y-scroll ">
         {messages.map(Msg)}
       </main>
 
       <form
         className="msger-inputarea"
         onSubmit={(e) => {
-          e.preventDefault();
-          if (!msgText) return;
+          e.preventDefault()
+          if (!msgText) return
 
           appendMessage({
             name: PERSON_NAME,
             img: PERSON_IMG,
             side: "right",
             text: msgText,
-          });
+          })
           // TODO: see if wait is required here
-          setMsgText("");
+          setMsgText("")
 
-          botResponse(msgText);
+          botResponse(msgText)
         }}
       >
         <input
@@ -164,5 +158,5 @@ export const Chat = () => {
         </button>
       </form>
     </section>
-  );
-};
+  )
+}
