@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from api.settings import OPENAI_API_KEY, GCP_API_KEY
-from api.voice import text_to_speech
+from api.settings import OPENAI_API_KEY
+from api.voice import Accent, text_to_speech
 
 
 app = FastAPI()
@@ -19,6 +19,6 @@ def submit(body: SubmitMessageRequest):
 
 # TODO: May not need to expose this
 @app.post("/api/text-to-speech")
-def submit(text: str):
-    recording = text_to_speech(text)
+def submit(text: str, accent: Accent = Accent.british):
+    recording = text_to_speech(text, accent)
     return {"recording": recording}
