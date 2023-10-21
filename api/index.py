@@ -11,5 +11,4 @@ class SubmitMessageRequest(BaseModel):
 
 @app.post("/api/chat.submit")
 def submit(body: SubmitMessageRequest):
-    
     return {"message": body.message[::-1]}
