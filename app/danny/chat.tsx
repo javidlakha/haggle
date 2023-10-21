@@ -260,6 +260,7 @@ export const Chat = () => {
               alt="Follow us on Twitter"
             />
             <div className={`text-${panellist.color}`}>{panellist.name}</div>
+            <div>{panellist.description}</div>
           </div>
         );
       })}
