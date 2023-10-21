@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
 
-from api.settings import OPENAI_API_KEY
+from api.settings import OPENAI_API_KEY, GCP_API_KEY
+from api.voice import text_to_speech
+
 
 app = FastAPI()
 
@@ -54,3 +56,10 @@ async def submit(body: SubmitMessageRequest):
     )
     
     return output["choices"][0]["message"]
+
+
+# TODO: May not need to expose this
+@app.post("/api/text-to-speech")
+def submit(text: str):
+    recording = text_to_speech(text)
+    return {"recording": recording}
