@@ -1,8 +1,9 @@
 from enum import Enum, unique
 import json
 import random
+from typing import Type
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
 from fastapi import FastAPI, File, UploadFile
@@ -11,6 +12,8 @@ from api.settings import BASE_PATH, OPENAI_API_KEY
 from api.voice import Accent, text_to_speech
 from langchain.document_loaders import PyMuPDFLoader
 from langchain.document_loaders.image import UnstructuredImageLoader
+from langchain.tools import format_tool_to_openai_function
+from langchain.tools.base import BaseTool
 
 app = FastAPI()
 
@@ -160,20 +163,33 @@ async def init(body: InitChatRequest):
     }
 
 
+class ArgsSchema(BaseModel):
+    response: str = Field(..., description="This is the thing you want to say.")
+
+    next_person: str = Field(
+        ...,
+        description="""
+        This is the next person you think should speak.
+        For example, if your colleague should introduce themselves next, then set this to their name.
+        If the next person is the user, then set this to empty string.
+        """,
+    )
+
+
+class GenerateResponse(BaseTool):
+    name: str = "generate_response"
+    description: str = "Use this tool to generate a response to the previous message."
+    args_schema: Type[ArgsSchema] = ArgsSchema
+
+    def _run(*args):
+        raise NotImplementedError
+
+
 @app.post("/api/chat.submit")
 async def submit(body: SubmitMessageRequest):
-    random_character = random.choice(characters)
-    other_characters = ", ".join([f'{c["name"]}: {c["role"]}' for c in characters if c["name"] != random_character["name"]])
-    system_message = SYSTEM_MESSAGE.format(
-        character_name=random_character["name"],
-        character_role=random_character["role"],
-        character_personality=random_character["personality"],
-        company_name=COMPANY,
-        cv=cv,
-        job_description=job_description,
-        user_context=user_context,
-        other_characters=other_characters,
-    )
+    users_turn = False
+    global messages
+    
     llm = ChatOpenAI(
         client=None,
         model=ModelType.GPT_3_5_TURBO,
@@ -183,22 +199,57 @@ async def submit(body: SubmitMessageRequest):
         request_timeout=240,
         openai_api_key=OPENAI_API_KEY,
     )
-    global messages
-
     messages.append({"role": "user", "content": body.message})
+    current_character = random.choice(characters)
+    
+    while not users_turn:
+        other_characters = ", ".join(
+            [
+                f'{c["name"]}: {c["role"]}'
+                for c in characters
+                if c["name"] != current_character["name"]
+            ]
+        )
+        system_message = SYSTEM_MESSAGE.format(
+            character_name=current_character["name"],
+            character_role=current_character["role"],
+            character_personality=current_character["personality"],
+            company_name=COMPANY,
+            cv=cv,
+            job_description=job_description,
+            user_context=user_context,
+            other_characters=other_characters,
+        )
+        
 
-    _messages = [{"role": "system", "content": system_message}] + [
-        {"role": m["role"], "content": m["content"]} for m in messages
-    ]
-
-    resp = await acompletion_with_retry(
-        llm=llm,
-        model=ModelType.GPT_3_5_TURBO,
-        messages=_messages,
-    )
-    output = resp["choices"][0]["message"]
-    messages.append(output)
-    return {"message": output["content"], "character": random_character}
+        _messages = [{"role": "system", "content": system_message}] + [
+            {"role": m["role"], "content": m["content"]} for m in messages
+        ]
+        tool = GenerateResponse()
+        resp = await acompletion_with_retry(
+            llm=llm,
+            model=ModelType.GPT_3_5_TURBO,
+            messages=_messages,
+            functions=[format_tool_to_openai_function(tool)],
+            function_call={
+                "name": tool.name,
+            },
+        )
+        answers = json.loads(resp["choices"][0]["message"]["function_call"]["arguments"])
+        messages.append(
+            {
+                "role": "assistant",
+                "content": answers["response"],
+                "character": current_character,
+            }
+        )
+        if answers["next_person"] == "":
+            users_turn = True
+        else:
+            current_character = next(
+                c for c in characters if c["name"] == answers["next_person"]
+            )
+    return {"message": answers["response"], "character": current_character}
 
 
 # TODO: May not need to expose this
