@@ -97,17 +97,14 @@ export const Chat = () => {
         throw new Error("Network response was not ok " + response.statusText)
       }
       const data = await response.json()
-      const msgText = data.message
-      const delay = msgText.split(" ").length * 100
-
-      setTimeout(() => {
-        appendMessage({
-          name: BOT_NAME,
-          img: BOT_IMG,
-          side: "left",
-          text: msgText,
-        })
-      }, delay)
+      const msgText = data.content
+      
+      appendMessage({
+        name: BOT_NAME,
+        img: BOT_IMG,
+        side: "left",
+        text: msgText,
+      })
     } catch (error) {
       console.error("There has been a problem with your fetch operation:", error)
     }

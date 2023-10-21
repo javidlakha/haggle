@@ -42,6 +42,7 @@ venv
 
 .mypy_cache
 
+*.env
 */.env
 /api/llm_agent/CV.txt
 /api/llm_agent/job_des.txt

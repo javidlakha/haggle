@@ -55,6 +55,14 @@ pnpm install
 
 Then, run the development server:
 
+Make sure you enter a virtualenv for the python backend.
+
+```
+python -m venv venv
+source venv/bin/activate
+```
+
+
 ```bash
 npm run dev
 # or
