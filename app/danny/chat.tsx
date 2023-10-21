@@ -64,32 +64,46 @@ const PERSON_IMG = "person";
 const BOT_NAME = "Big Boss";
 const PERSON_NAME = "Haggler";
 
-async function getResponse(conversation: Message[], model: string = "davinci") {
+async function getResponse(conversation: Message[], roleplaySetup?: string) {
   const messagesForOpenAI = conversation.map((msg) => ({
-    role: msg.name === "bot" ? "assistant" : "user",
+    role: msg.name === BOT_NAME ? "assistant" : "user",
     content: msg.text,
   }));
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const finishedMessages = roleplaySetup
+    ? [{ role: "system", content: roleplaySetup }, ...messagesForOpenAI]
+    : messagesForOpenAI;
+  console.log({ finishedMessages });
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: model,
-      messages: messagesForOpenAI,
+      model: "gpt-3.5-turbo-16k",
+      messages: roleplaySetup
+        ? [{ role: "system", content: roleplaySetup }, ...messagesForOpenAI]
+        : messagesForOpenAI,
+      temperature: 0,
     }),
   });
+  const data = await response.json();
+  const message = data.choices[0].message.content;
+  console.log({ message });
+  return message;
 }
 
 export const Chat = () => {
+  const [roleplaySetup, setRoleplaySetup] = useState<string>(
+    "You are an AI assistant helping the user to roleplay a job interview situation. You are the boss who is hosting the interview and the user is the job applicant"
+  );
   const [msgText, setMsgText] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       name: BOT_NAME,
       img: BOT_IMG,
       side: "left",
-      text: "Hi, welcome to this job interview?",
+      text: "Hi, welcome to this job interview!",
       date: new Date(),
     },
     {
@@ -107,74 +121,83 @@ export const Chat = () => {
     setMessages((prev) => [...prev, message]);
   }
 
-  function botResponse() {
-    const r = random(0, BOT_MSGS.length - 1);
-    const msgText = BOT_MSGS[r];
-    const delay = msgText.split(" ").length * 100;
-
-    getResponse(messages).then((res) => {
-      console.log(res);
-    });
-
-    setTimeout(() => {
+  function botResponse(message: Message) {
+    const messagesToSubmit =
+      messages[messages.length - 1].text === message.text
+        ? messages
+        : [...messages, message];
+    getResponse(messagesToSubmit).then((res) => {
       appendMessage({
         name: BOT_NAME,
         img: BOT_IMG,
         side: "left",
-        text: msgText,
+        text: res,
         date: new Date(),
       });
-    }, delay);
+    });
   }
 
   return (
-    <section className="msger">
-      <header className="msger-header">
-        <div className="msger-header-title">HagglChat</div>
-        <div className="msger-header-options">
-          <span>
-            <i className="fas fa-cog"></i>
-          </span>
-        </div>
-      </header>
+    <div>
+      <input
+        className="text-black"
+        value={roleplaySetup}
+        onChange={(e) => setRoleplaySetup(e.target.value)}
+      />
+      <section className="msger">
+        <header className="msger-header">
+          <div className="msger-header-title">HagglChat</div>
+          <div className="msger-header-options">
+            <span>
+              <i className="fas fa-cog"></i>
+            </span>
+          </div>
+        </header>
 
-      <main
-        style={{ maxHeight: "600px" }}
-        className="msger-chat overflow-y-scroll "
-      >
-        {messages.map(Msg)}
-      </main>
+        <main
+          style={{ maxHeight: "600px" }}
+          className="msger-chat overflow-y-scroll "
+        >
+          {messages.map(Msg)}
+        </main>
 
-      <form
-        className="msger-inputarea"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!msgText) return;
+        <form
+          className="msger-inputarea"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!msgText) return;
 
-          appendMessage({
-            name: PERSON_NAME,
-            img: PERSON_IMG,
-            side: "right",
-            text: msgText,
-            date: new Date(),
-          });
-          // TODO: see if wait is required here
-          setMsgText("");
+            appendMessage({
+              name: PERSON_NAME,
+              img: PERSON_IMG,
+              side: "right",
+              text: msgText,
+              date: new Date(),
+            });
+            // TODO: see if wait is required here
+            setMsgText("");
 
-          botResponse();
-        }}
-      >
-        <input
-          type="text"
-          className="msger-input text-black"
-          placeholder="Enter your message..."
-          value={msgText}
-          onChange={(e) => setMsgText(e.target.value)}
-        />
-        <button type="submit" className="msger-send-btn">
-          Send
-        </button>
-      </form>
-    </section>
+            botResponse({
+              name: PERSON_NAME,
+              img: PERSON_IMG,
+              side: "right",
+              text: msgText,
+              date: new Date(),
+            });
+          }}
+        >
+          <input
+            type="text"
+            className="msger-input text-black"
+            placeholder="Enter your message..."
+            value={msgText}
+            onChange={(e) => setMsgText(e.target.value)}
+          />
+          <button type="submit" className="msger-send-btn">
+            Send
+          </button>
+        </form>
+      </section>
+    </div>
   );
 };
