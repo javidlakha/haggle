@@ -10,7 +10,7 @@ assistant_prompt = """
 """
 
 def get_condensed_question(self, question, chat_history):
-    # ex_chat_history = [("Who founded Gaia?", "The founder of Gaia is Nader al Salim")]
+    # ex_chat_history = [("Question?", "Answer")]
     inps = {'chat_history': chat_history, 'question': question}
     condensed_question = self.question_generator(inps)["text"]
     # print("generated question: ", condensed_question)
