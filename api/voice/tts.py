@@ -26,7 +26,12 @@ class Accent(str, Enum):
     italian = "italian"
 
 
-def text_to_speech(text: str, accent: Accent = Accent.british) -> str:
+def text_to_speech(
+    text: str,
+    accent: Accent = Accent.british,
+    pitch: float = 0,
+    speed: float = 1,
+) -> str:
     """Convert text to speech"""
     response = requests.post(
         ENDPOINT,
@@ -36,6 +41,12 @@ def text_to_speech(text: str, accent: Accent = Accent.british) -> str:
         },
         data=json.dumps(
             {
+                "audioConfig": {
+                    "audioEncoding": "LINEAR16",
+                    "effectsProfileId": ["small-bluetooth-speaker-class-device"],
+                    "pitch": pitch,
+                    "speakingRate": speed,
+                },
                 "input": {"text": text},
                 "voice": ACCENTS[accent.value],
                 "audioConfig": {"audioEncoding": "MP3"},

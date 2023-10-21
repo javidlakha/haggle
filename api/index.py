@@ -27,7 +27,6 @@ class SubmitMessageRequest(BaseModel):
     messages: list[str] = []
 
 
-
 @app.post("/api/chat.submit")
 async def submit(body: SubmitMessageRequest):
     llm = ChatOpenAI(
@@ -40,10 +39,7 @@ async def submit(body: SubmitMessageRequest):
         openai_api_key=OPENAI_API_KEY,
     )
     messages = [
-        {
-            "role": "system",
-            "content": "You are an interviewer. Stay in character!"
-        },
+        {"role": "system", "content": "You are an interviewer. Stay in character!"},
         {
             "role": "user",
             "content": body.message,
@@ -54,12 +50,17 @@ async def submit(body: SubmitMessageRequest):
         model=ModelType.GPT_3_5_TURBO,
         messages=messages,
     )
-    
+
     return output["choices"][0]["message"]
 
 
 # TODO: May not need to expose this
 @app.post("/api/text-to-speech")
-def submit(text: str, accent: Accent = Accent.british):
-    recording = text_to_speech(text, accent)
+def submit(
+    text: str,
+    accent: Accent = Accent.british,
+    pitch: float = 0,
+    speed: float = 1,
+):
+    recording = text_to_speech(text, accent, pitch, speed)
     return {"recording": recording}
