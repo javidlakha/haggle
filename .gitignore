@@ -41,6 +41,4 @@ venv
 
 .mypy_cache
 
-
-venv
 */.env
