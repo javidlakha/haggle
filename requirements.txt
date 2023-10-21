@@ -3,3 +3,8 @@ langchain==0.0.320
 openai==0.28.1
 requests==2.31.0
 uvicorn[standard]==0.23.2
+python-multipart
+pymupdf
+unstructured
+pdf2image
+pdfminer
