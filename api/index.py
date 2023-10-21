@@ -1,12 +1,12 @@
 from enum import Enum, unique
-import json
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Form, Request, UploadFile
+from fastapi.encoders import jsonable_encoder
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
+from pydantic import BaseModel
 
 from api.settings import OPENAI_API_KEY
-from api.voice import Accent, text_to_speech
+from api.voice import Accent, upload_voice_file, text_to_speech
 
 
 app = FastAPI()
@@ -52,6 +52,11 @@ async def submit(body: SubmitMessageRequest):
     )
 
     return output["choices"][0]["message"]
+
+
+@app.post("/api/upload-voice")
+async def upload_voice(recording: UploadFile):
+    recording_path = upload_voice_file(await recording.read())
 
 
 # TODO: May not need to expose this
