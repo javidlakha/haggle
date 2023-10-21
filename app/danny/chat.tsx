@@ -98,7 +98,7 @@ export const Chat = () => {
       }
       const data = await response.json()
       const msgText = data.content
-      console.log("botResponse", data)
+      
       appendMessage({
         name: BOT_NAME,
         img: BOT_IMG,
