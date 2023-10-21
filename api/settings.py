@@ -2,7 +2,7 @@ import pathlib
 from starlette.config import Config
 
 # Configuration from environment variables or '.env' file.
-config = Config(pathlib.Path(__file__).parent.resolve() / ".env")
+config = Config(pathlib.Path(__file__).parent.parent.resolve() / ".env")
 
 # GCP API key.
 GCP_API_KEY = config("GCP_API_KEY", default="")
