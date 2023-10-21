@@ -218,7 +218,37 @@ export const Chat = () => {
     setMessages((prev) => [...prev, message]);
   }
 
-  function botResponse(message: Message) {
+  async function remoteBotResponse(message: string) {
+    try {
+      const response = await fetch("/api/chat.submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message }),
+      });
+      if (!response.ok) {
+        throw new Error("Network response was not ok " + response.statusText);
+      }
+      const data = await response.json();
+      const msgText = data.content;
+
+      appendMessage({
+        name: BOT_NAME,
+        img: BOT_IMG,
+        side: "left",
+        text: msgText,
+        date: new Date(),
+      });
+    } catch (error) {
+      console.error(
+        "There has been a problem with your fetch operation:",
+        error
+      );
+    }
+  }
+
+  function localBotResponse(message: Message) {
     const messagesToSubmit =
       messages[messages.length - 1].text === message.text
         ? messages
@@ -297,7 +327,7 @@ export const Chat = () => {
             // TODO: see if wait is required here
             setMsgText("");
 
-            botResponse({
+            localBotResponse({
               name: PERSON_NAME,
               img: PERSON_IMG,
               side: "right",
