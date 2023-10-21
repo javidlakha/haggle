@@ -1,3 +1,6 @@
+# TODO: EXTREMELY IMPORTANT
+# Remove OPENAI API KEY from api/llm_agent/agent.py directory and sanitise git
+
 from enum import Enum, unique
 import json
 import random
@@ -11,6 +14,15 @@ from api.settings import BASE_PATH, OPENAI_API_KEY
 from api.voice import Accent, text_to_speech
 from langchain.document_loaders import PyMuPDFLoader
 from langchain.document_loaders.image import UnstructuredImageLoader
+from fastapi import FastAPI, UploadFile
+from fastapi.responses import FileResponse
+from langchain.chat_models import ChatOpenAI
+from langchain.chat_models.openai import acompletion_with_retry
+from pydantic import BaseModel
+
+from api.settings import OPENAI_API_KEY
+from api.voice import Accent, save_recording, speech_to_text, text_to_speech
+
 
 app = FastAPI()
 
@@ -163,7 +175,13 @@ async def init(body: InitChatRequest):
 @app.post("/api/chat.submit")
 async def submit(body: SubmitMessageRequest):
     random_character = random.choice(characters)
-    other_characters = ", ".join([f'{c["name"]}: {c["role"]}' for c in characters if c["name"] != random_character["name"]])
+    other_characters = ", ".join(
+        [
+            f'{c["name"]}: {c["role"]}'
+            for c in characters
+            if c["name"] != random_character["name"]
+        ]
+    )
     system_message = SYSTEM_MESSAGE.format(
         character_name=random_character["name"],
         character_role=random_character["role"],
@@ -201,9 +219,9 @@ async def submit(body: SubmitMessageRequest):
     return {"message": output["content"], "character": random_character}
 
 
-# TODO: May not need to expose this
+# TODO: Endpoint used for testing, may not need to expose this
 @app.post("/api/text-to-speech")
-def submit(
+def text_to_speech_endpoint(
     text: str,
     accent: Accent = Accent.british,
     pitch: float = 0,
@@ -211,3 +229,27 @@ def submit(
 ):
     recording = text_to_speech(text, accent, pitch, speed)
     return {"recording": recording}
+
+
+# TODO: Endpoint used for testing, may not need to expose this
+@app.post("/api/transcribe-voice")
+async def transcribe_voice_endpoint(recording: UploadFile):
+    recording_path = save_recording(await recording.read())
+    transcript = speech_to_text(recording_path)
+    print(transcript)
+
+
+# TODO: Endpoint used for testing, may not need to expose this
+@app.post("/api/upload-voice")
+async def upload_voice_endpoint(recording: UploadFile):
+    recording_path = save_recording(await recording.read())
+
+
+# TODO: Remove?
+@app.post("/api/italian-parrot")
+async def transcribe_voice_endpoint(recording: UploadFile):
+    """Repeats what you say, but in an Italian accent"""
+    recording_path = save_recording(await recording.read())
+    transcript = speech_to_text(recording_path)
+    response_path = text_to_speech(transcript, Accent.italian, 0, 1)
+    return FileResponse(response_path, media_type="audio/mp3")
