@@ -152,7 +152,8 @@ async def init(body: InitChatRequest):
     global messages
     global characters
     global user_context
-
+    
+    messages = []
     user_context = body.user_context
 
     init_message = f"Hi, Confident-Ally, welcome to {COMPANY}. Shall we begin by doing some introductions?"
