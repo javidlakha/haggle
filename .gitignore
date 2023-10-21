@@ -38,3 +38,5 @@ next-env.d.ts
 **/__pycache__
 venv
 *.egg-info
+
+.mypy_cache
