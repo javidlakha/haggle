@@ -1,4 +1,5 @@
 import base64
+from enum import Enum
 import json
 import pathlib
 import requests
@@ -6,11 +7,26 @@ from uuid import uuid4
 
 from api.settings import GCP_API_KEY
 
+ACCENTS = {
+    "american": {"languageCode": "en-US", "name": "en-US-Wavenet-A"},
+    "british": {"languageCode": "en-GB", "name": "en-GB-Wavenet-A"},
+    "french": {"languageCode": "fr-FR", "name": "fr-FR-Wavenet-A"},
+    "german": {"languageCode": "de-DE", "name": "de-DE-Wavenet-A"},
+    "italian": {"languageCode": "it-IT", "name": "it-IT-Wavenet-A"},
+}
 BASE = pathlib.Path(__file__).parent.parent.parent.resolve()
 ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize"
 
 
-def text_to_speech(text: str) -> str:
+class Accent(str, Enum):
+    american = "american"
+    british = "british"
+    french = "french"
+    german = "german"
+    italian = "italian"
+
+
+def text_to_speech(text: str, accent: Accent = Accent.british) -> str:
     """Convert text to speech"""
     response = requests.post(
         ENDPOINT,
@@ -21,10 +37,7 @@ def text_to_speech(text: str) -> str:
         data=json.dumps(
             {
                 "input": {"text": text},
-                "voice": {
-                    "languageCode": "it-IT",
-                    "name": "it-IT-Wavenet-A",
-                },
+                "voice": ACCENTS[accent.value],
                 "audioConfig": {"audioEncoding": "MP3"},
             }
         ),

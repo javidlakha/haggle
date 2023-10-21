@@ -1,1 +1,1 @@
-from api.voice.tts import text_to_speech
+from api.voice.tts import Accent, text_to_speech
