@@ -98,6 +98,11 @@ async def submit(body: SubmitMessageRequest):
 
 # TODO: May not need to expose this
 @app.post("/api/text-to-speech")
-def submit(text: str, accent: Accent = Accent.british):
-    recording = text_to_speech(text, accent)
+def submit(
+    text: str,
+    accent: Accent = Accent.british,
+    pitch: float = 0,
+    speed: float = 1,
+):
+    recording = text_to_speech(text, accent, pitch, speed)
     return {"recording": recording}
