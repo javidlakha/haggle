@@ -1,7 +1,14 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
+from api.settings import OPENAI_API_KEY
 
 app = FastAPI()
 
-@app.get("/api/python")
-def hello_world():
-    return {"message": "Hello World"}
+
+class SubmitMessageRequest(BaseModel):
+    message: str
+
+
+@app.post("/api/chat.submit")
+def submit(body: SubmitMessageRequest):
+    return {"message": body.message[::-1]}
