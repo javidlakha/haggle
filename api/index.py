@@ -1,5 +1,6 @@
 from enum import Enum, unique
 import json
+import random
 from fastapi import FastAPI
 from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
@@ -27,7 +28,49 @@ class SubmitMessageRequest(BaseModel):
     messages: list[str] = []
 
 
-messages = [{"role": "system", "content": "You are an interviewer. Stay in character!"}]
+characters = [
+    {
+        "name": "Brian",
+        "role": "Head of Engineering",
+        "accent": "British",
+        "personality": "aggressive, impatient, pedant",
+    },
+]
+
+cv = """
+I'm Henry a software engineer with 5 years of experience.
+I have worked at Google and Facebook. I have a degree in Computer Science from MIT.
+"""
+
+job_description = """
+We are looking for a software engineer with 5 years of experience.
+You will be working on our new product.
+"""
+
+SYSTEM_MESSAGE = """
+You are an {character_name}, a {character_role} at {company_name}. You are {character_personality}.
+
+Here is the candidate's CV: {cv}
+
+Here is the job description: {job_description}
+
+Below, you may see a conversation history between you and the candidate.
+
+Conduct an interview with the candidate. Always stay in character.
+"""
+
+random_character = random.choice(characters)
+
+system_message = SYSTEM_MESSAGE.format(
+    character_name=random_character["name"],
+    character_role=random_character["role"],
+    character_personality=random_character["personality"],
+    company_name="Google",
+    cv = cv,
+    job_description = job_description,
+)
+
+messages = [{"role": "system", "content": system_message}]
 
 
 @app.post("/api/chat.submit")

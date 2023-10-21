@@ -72,12 +72,6 @@ export const Chat = () => {
       side: "left",
       text: "Hi, welcome to this job interview?",
     },
-    {
-      name: PERSON_NAME,
-      img: PERSON_IMG,
-      side: "right",
-      text: "Thanks, I'm super ready to go! Let me start",
-    },
   ])
 
   function appendMessage(message: Message) {
