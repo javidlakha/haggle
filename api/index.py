@@ -27,6 +27,8 @@ class SubmitMessageRequest(BaseModel):
     messages: list[str] = []
 
 
+messages = [{"role": "system", "content": "You are an interviewer. Stay in character!"}]
+
 
 @app.post("/api/chat.submit")
 async def submit(body: SubmitMessageRequest):
@@ -35,27 +37,20 @@ async def submit(body: SubmitMessageRequest):
         model=ModelType.GPT_3_5_TURBO,
         temperature=0.0,
         streaming=False,
-        max_retries=2,
+        max_retries=3,
         request_timeout=240,
         openai_api_key=OPENAI_API_KEY,
     )
-    messages = [
-        {
-            "role": "system",
-            "content": "You are an interviewer. Stay in character!"
-        },
-        {
-            "role": "user",
-            "content": body.message,
-        },
-    ]
-    output = await acompletion_with_retry(
+    global messages
+    messages.append({"role": "user", "content": body.message})
+    resp = await acompletion_with_retry(
         llm=llm,
         model=ModelType.GPT_3_5_TURBO,
         messages=messages,
     )
-    
-    return output["choices"][0]["message"]
+    output = resp["choices"][0]["message"]
+    messages.append(output)
+    return output
 
 
 # TODO: May not need to expose this
