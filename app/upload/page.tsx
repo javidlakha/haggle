@@ -42,7 +42,7 @@ export default function Home() {
             Send to server
           </button>
         </div>
-        <img src={createObjectURL} />
+        <img src={createObjectURL} width={100} height={100} />
 
         <div className="color-black h-screen w-2/5 bg-gray-500 items-center inline-block p-4 py-16">
           <Image
