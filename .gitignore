@@ -24,7 +24,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# env files
+.env
 .env*.local
 
 # vercel
@@ -41,3 +42,16 @@ venv
 
 .mypy_cache
 .env
+
+*.env
+*/.env
+/api/llm_agent/CV.txt
+/api/llm_agent/job_des.txt
+/api/llm_agent/__pycache__
+/api/llm_agent/README.md
+/api/llm_agent/env/
+
+
+
+
+
