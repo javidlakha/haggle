@@ -1,12 +1,14 @@
+# TODO: EXTREMELY IMPORTANT
+# Remove OPENAI API KEY from api/llm_agent/agent.py directory and sanitise git
+
 from enum import Enum, unique
-from fastapi import FastAPI, Form, Request, UploadFile
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, UploadFile
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
 from pydantic import BaseModel
 
 from api.settings import OPENAI_API_KEY
-from api.voice import Accent, upload_voice_file, text_to_speech
+from api.voice import Accent, save_recording, speech_to_text, text_to_speech
 
 
 app = FastAPI()
@@ -54,14 +56,9 @@ async def submit(body: SubmitMessageRequest):
     return output["choices"][0]["message"]
 
 
-@app.post("/api/upload-voice")
-async def upload_voice(recording: UploadFile):
-    recording_path = upload_voice_file(await recording.read())
-
-
-# TODO: May not need to expose this
+# TODO: Endpoint used for testing, may not need to expose this
 @app.post("/api/text-to-speech")
-def submit(
+def text_to_speech_endpoint(
     text: str,
     accent: Accent = Accent.british,
     pitch: float = 0,
@@ -69,3 +66,17 @@ def submit(
 ):
     recording = text_to_speech(text, accent, pitch, speed)
     return {"recording": recording}
+
+
+# TODO: Endpoint used for testing, may not need to expose this
+@app.post("/api/transcribe-voice")
+async def transcribe_voice_endpoint(recording: UploadFile):
+    recording_path = save_recording(await recording.read())
+    transcript = speech_to_text(recording_path)
+    print(transcript)
+
+
+# TODO: Endpoint used for testing, may not need to expose this
+@app.post("/api/upload-voice")
+async def upload_voice_endpoint(recording: UploadFile):
+    recording_path = save_recording(await recording.read())
