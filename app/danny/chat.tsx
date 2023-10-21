@@ -203,16 +203,7 @@ export const Chat = () => {
       text: "Hi, welcome to this job interview!",
       date: new Date(),
     },
-    {
-      name: PERSON_NAME,
-      img: PERSON_IMG,
-      side: "right",
-      text: "Thanks, I'm super ready to go! Let me start",
-      date: new Date(),
-    },
-  ]);
-
-  // TODO: functionality to auto-scroll to the bottom after message submission and adding responses
+  ])
 
   function appendMessage(message: Message) {
     setMessages((prev) => [...prev, message]);

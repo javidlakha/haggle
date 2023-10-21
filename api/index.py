@@ -1,5 +1,6 @@
 from enum import Enum, unique
 import json
+import random
 from fastapi import FastAPI
 from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
@@ -27,6 +28,50 @@ class SubmitMessageRequest(BaseModel):
     messages: list[str] = []
 
 
+characters = [
+    {
+        "name": "Brian",
+        "role": "Head of Engineering",
+        "accent": "British",
+        "personality": "aggressive, impatient, pedant",
+    },
+]
+
+cv = """
+I'm Henry a software engineer with 5 years of experience.
+I have worked at Google and Facebook. I have a degree in Computer Science from MIT.
+"""
+
+job_description = """
+We are looking for a software engineer with 5 years of experience.
+You will be working on our new product.
+"""
+
+SYSTEM_MESSAGE = """
+You are an {character_name}, a {character_role} at {company_name}. You are {character_personality}.
+
+Here is the candidate's CV: {cv}
+
+Here is the job description: {job_description}
+
+Below, you may see a conversation history between you and the candidate.
+
+Conduct an interview with the candidate. Always stay in character.
+"""
+
+random_character = random.choice(characters)
+
+system_message = SYSTEM_MESSAGE.format(
+    character_name=random_character["name"],
+    character_role=random_character["role"],
+    character_personality=random_character["personality"],
+    company_name="Google",
+    cv = cv,
+    job_description = job_description,
+)
+    
+messages = [{"role": "system", "content": system_message}]
+
 
 @app.post("/api/chat.submit")
 async def submit(body: SubmitMessageRequest):
@@ -35,31 +80,29 @@ async def submit(body: SubmitMessageRequest):
         model=ModelType.GPT_3_5_TURBO,
         temperature=0.0,
         streaming=False,
-        max_retries=2,
+        max_retries=3,
         request_timeout=240,
         openai_api_key=OPENAI_API_KEY,
     )
-    messages = [
-        {
-            "role": "system",
-            "content": "You are an interviewer. Stay in character!"
-        },
-        {
-            "role": "user",
-            "content": body.message,
-        },
-    ]
-    output = await acompletion_with_retry(
+    global messages
+    messages.append({"role": "user", "content": body.message})
+    resp = await acompletion_with_retry(
         llm=llm,
         model=ModelType.GPT_3_5_TURBO,
         messages=messages,
     )
-    
-    return output["choices"][0]["message"]
+    output = resp["choices"][0]["message"]
+    messages.append(output)
+    return output
 
 
 # TODO: May not need to expose this
 @app.post("/api/text-to-speech")
-def submit(text: str, accent: Accent = Accent.british):
-    recording = text_to_speech(text, accent)
+def submit(
+    text: str,
+    accent: Accent = Accent.british,
+    pitch: float = 0,
+    speed: float = 1,
+):
+    recording = text_to_speech(text, accent, pitch, speed)
     return {"recording": recording}
