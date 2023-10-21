@@ -2,7 +2,7 @@
 
 import { Record } from "./record";
 
-export default function Home() {
+export default function Voice() {
   return (
     <main>
       <div>

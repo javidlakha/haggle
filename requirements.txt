@@ -4,3 +4,4 @@ openai==0.28.1
 pydub==0.25.1
 requests==2.31.0
 uvicorn[standard]==0.23.2
+websockets==12.0

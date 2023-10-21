@@ -2,10 +2,12 @@
 # Remove OPENAI API KEY from api/llm_agent/agent.py directory and sanitise git
 
 from enum import Enum, unique
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, WebSocket
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
 from pydantic import BaseModel
+
+import openai
 
 from api.settings import OPENAI_API_KEY
 from api.voice import Accent, save_recording, speech_to_text, text_to_speech
@@ -80,3 +82,25 @@ async def transcribe_voice_endpoint(recording: UploadFile):
 @app.post("/api/upload-voice")
 async def upload_voice_endpoint(recording: UploadFile):
     recording_path = save_recording(await recording.read())
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        system_prompt = "You are an interviewer. Stay in character!"
+        for completion in openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "system", "content": system_prompt}],
+            stream=True,
+            api_key=OPENAI_API_KEY,
+        ):
+            completion = completion["choices"][0]
+            if "content" in completion["delta"]:
+                message = completion["delta"]["content"]
+                await websocket.send_json({"update": message, "stop": False})
+
+            if completion["finish_reason"] == "stop":
+                await websocket.send_json({"stop": True})
+                break
