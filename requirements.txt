@@ -1,6 +1,5 @@
 fastapi==0.100.1
-pandas==2.1.1
+langchain==0.0.320
+openai==0.28.1
 requests==2.31.0
 uvicorn[standard]==0.23.2
-langchain
-openai
