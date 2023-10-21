@@ -40,3 +40,7 @@ venv
 *.egg-info
 
 .mypy_cache
+
+
+venv
+*/.env
