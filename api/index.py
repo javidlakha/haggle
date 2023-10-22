@@ -51,7 +51,7 @@ You will be working on our new product.
 DEFAULT_NAME = "Confident-Ally"
 
 SYSTEM_MESSAGE = """
-You are an {character_name}, a {character_role} at {company_name}. You are {character_personality}.
+You are an {character_name}, a {character_role} at {company_name}. You are {character_personality}. You are currently {character_mood}.
 
 Here is the candidate's CV/resume: {cv}
 
@@ -84,14 +84,14 @@ class Database:
     message_history: List[dict[str, Any]] = field(default_factory=list)
     company: str = COMPANY
     uploaded: bool = False
-    
+
     def upload(self, document, type="cv"):
         self.uploaded = True
         if type == "cv":
             self.cv = document
         else:
             self.job_description = document
-        
+
     def init_chat(self, user_name, user_context, company):
         self.user_name = user_name
         self.user_context = user_context
@@ -99,30 +99,42 @@ class Database:
         if not self.uploaded:
             self.cv = None
         self.message_history = []
-        
 
-    
 
 database = None
 
 # TODO(hm): Autogenerate these from the JD.
+
+
+class Character(BaseModel):
+    name: str
+    role: str
+    accent: Accent
+    personality: str
+    color: str
+    img: str
+
+
 characters = [
-    {
-        "name": "Janet",
-        "role": "VP of Engineering within the Google Cloud Platform team",
-        "accent": Accent.american,
-        "personality": "aggressive, impatient and a pedant. You are a stickler for detail.",
-        "color": "red",
-        "img": "bot",
-    },
-    {
-        "name": "Brian",
-        "role": "Product Manager within Google Pay",
-        "accent": Accent.british,
-        "personality": "assertive, funny and get unhappy when people waste your time.",
-        "color": "orange",
-        "img": "bot",
-    },
+    Character.model_validate(c)
+    for c in [
+        {
+            "name": "Janet",
+            "role": "VP of Engineering within the Google Cloud Platform team",
+            "accent": Accent.american,
+            "personality": "aggressive, impatient and a pedant. You are a stickler for detail.",
+            "color": "red",
+            "img": "bot",
+        },
+        {
+            "name": "Brian",
+            "role": "Product Manager within Google Pay",
+            "accent": Accent.british,
+            "personality": "assertive, funny and get unhappy when people waste your time.",
+            "color": "orange",
+            "img": "bot",
+        },
+    ]
 ]
 
 
@@ -172,7 +184,7 @@ async def upload_file(file: UploadFile):
         database.upload(doc_string, type="jd")
 
     print("upload:", database)
-    
+
     return {"filename": file.filename}
 
 
@@ -182,12 +194,14 @@ async def init(body: InitChatRequest):
     global database
     if database is None:
         database = Database()
-    
-    database.init_chat(user_name=DEFAULT_NAME, user_context=body.user_context, company=COMPANY)
+
+    database.init_chat(
+        user_name=DEFAULT_NAME, user_context=body.user_context, company=COMPANY
+    )
     user_name = database.user_name
 
     current_character = characters[0]
-    
+
     init_message = f"Hi, {user_name}, welcome to {COMPANY}. Let's go around the table and introduce ourselves. I'm {current_character['name']}, a {current_character['role']}. Could you introduce yourself, {user_name}?"
 
     if database.cv is None:
@@ -201,14 +215,16 @@ async def init(body: InitChatRequest):
     database.message_history.append(initial_message)
     # Hack to clear the database.
     database.uploaded = False
-    
+
     return {
         "initial_message": initial_message,
         "characters": characters,
     }
 
 
-async def get_chat_response(messages, model=ModelType.GPT_3_5_TURBO):
+async def get_chat_response(
+    messages, model=ModelType.GPT_4, functions: list = [], function_call: dict = None
+):
     llm = ChatOpenAI(
         client=None,
         model=model,
@@ -222,7 +238,35 @@ async def get_chat_response(messages, model=ModelType.GPT_3_5_TURBO):
         llm=llm,
         model=model,
         messages=messages,
+        functions=functions,
+        function_call=function_call,
     )
+
+
+@unique
+class Mood(Enum):
+    Positive = "happy"
+    Negative = "unimpressed"
+
+
+class CreateResponse(BaseModel):
+    speaker: str
+    mood: Mood
+    response: str
+
+
+async def get_mood_and_speaker(_messages):
+    prompt = "Who should speak next, and what would their mood be in this conversation below?"
+    prompt += (
+        f"Character between: '{Mood.Positive.value}' and '{Mood.Negative.value}'\n\n"
+    )
+    prompt += "\n".join([f"{m['role']}: {m['content']}" for m in _messages])
+    mood_resp = await get_chat_response({"role": "user", "content": prompt})
+
+    if Mood.Negative.value in mood_resp["choices"][0]["message"].lower():
+        return Mood.Negative
+    else:
+        return Mood.Positive
 
 
 @app.post("/api/chat.submit")
@@ -230,10 +274,13 @@ async def submit(body: SubmitMessageRequest):
     global database
     messages = database.message_history
     # Want each character to introduce themselves.
-    if len(messages) < 3:
+    if len(messages) < 4:
         current_character = characters[len(messages) % len(characters)]
     else:
         current_character = random.choice(characters)
+
+    message = {"role": "user", "content": body.message}
+    messages.append(message)
 
     other_characters = ", ".join(
         [
@@ -242,29 +289,30 @@ async def submit(body: SubmitMessageRequest):
             if c["name"] != current_character["name"]
         ]
     )
+    mood = get_mood(current_character["name"], _messages)
     system_message = SYSTEM_MESSAGE.format(
         character_name=current_character["name"],
         character_role=current_character["role"],
         character_personality=current_character["personality"],
+        character_mood=mood.value,
         company_name=database.company,
         cv=database.cv,
         job_description=database.job_description,
         user_context=database.user_context,
         other_characters=other_characters,
     )
-    if len(messages) < 3:
+    if len(messages) < 5:
         system_message += "\n\Have you have introduced yourself to the candidate yet?"
 
-    message = {"role": "user", "content": body.message}
-    messages.append(message)
     _messages = [{"role": "system", "content": system_message}] + [
         {"role": m["role"], "content": m["content"]} for m in messages
     ]
-    
+
     print("What the user sees:", messages, len(messages))
     print("What the model sees:", _messages, len(_messages))
-    
+
     resp = await get_chat_response(_messages)
+
     output = resp["choices"][0]["message"]
 
     messages.append(output)
