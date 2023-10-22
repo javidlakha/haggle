@@ -5,12 +5,15 @@ import Image from "next/image"
 import { PacmanLoader, PulseLoader } from "react-spinners"
 import { FaRegSadCry } from "react-icons/fa"
 import { BiConversation, BiBeer } from "react-icons/bi"
+import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
 
 type Side = "left" | "right"
 
+type MessageImg = "bot" | "person" | "Janet" | "Brian"
+
 type Message = {
   name: string
-  img: "bot" | "person"
+  img: MessageImg
   side: Side
   date: Date
   text: string
@@ -20,6 +23,27 @@ function formatDate(date: Date) {
   const m = "0" + date.getMinutes()
 
   return `${h.slice(-2)}:${m.slice(-2)}`
+}
+
+function nameToIcon(name: MessageImg, className?: string): React.ReactNode {
+  if (name === "Brian") {
+    return <FcBusinessman size={30} className={className} />
+  } else if (name === "Janet") {
+    return <FcBusinesswoman size={30} className={className} />
+  } else {
+    return (
+      <Image
+        priority
+        src={`/bot.svg`}
+        // style={{ color: panellist?.color }}
+        className="mt-2 ml-2"
+        width={30}
+        height={30}
+        // color={panellist?.color}
+        alt="Follow us on Twitter"
+      />
+    )
+  }
 }
 
 function FileUpload() {
@@ -74,26 +98,29 @@ function FileUpload() {
   )
 }
 
-const Msg = (message: Message) => {
+const Msg = (message: Message, color?: string) => {
   return (
     <div className={`msg ${message.side}-msg`}>
       <div
         className="msg-img"
         // style="background-image: url(${img})" TODO
       >
-        <Image
+        {nameToIcon(message.name, "mt-2 ml-2")}
+        {/* <Image
           priority
           src={`/${message.img}.svg`}
           className="mt-2 ml-2"
           width={30}
           height={30}
           alt="Follow us on Twitter"
-        />
+        /> */}
       </div>
 
       <div className="msg-bubble">
         <div className="msg-info">
-          <div className="msg-info-name">{message.name}</div>
+          <div className="msg-info-name" style={{ color: color }}>
+            {message.name}
+          </div>
           <div className="msg-info-time">{formatDate(message.date)}</div>
         </div>
 
@@ -111,7 +138,7 @@ const DEFAULT_CONTEXT =
 
 type Panellist = {
   img: "bot" | "person"
-  name: string
+  name: MessageImg
   description: string
   role: "boss" | "assistant"
   color: "red" | "orange" | "green"
@@ -189,6 +216,7 @@ export const Chat = () => {
       block: "end",
       inline: "nearest",
     })
+    console.log(messages)
   }, [messages, messages.length])
 
   async function remoteBotResponse(message: Message) {
@@ -207,7 +235,12 @@ export const Chat = () => {
       const data = await response.json()
       appendMessage({
         name: data.character.name,
-        img: BOT_IMG,
+        img:
+          data.character.name === "Janet"
+            ? "janet"
+            : data.character.name === "Brian"
+            ? "brian"
+            : BOT_IMG,
         side: "left",
         text: data.message,
         date: new Date(),
@@ -304,7 +337,8 @@ export const Chat = () => {
             style={{ color: panellist?.color }}
             className={`text-${panellist?.color} flex items-center gap-2`}
           >
-            <Image
+            <div className="mt-2 ml-2">{nameToIcon(panellist?.name)}</div>
+            {/* <Image
               priority
               src={`/${panellist?.img}.svg`}
               style={{ color: panellist?.color }}
@@ -313,7 +347,7 @@ export const Chat = () => {
               height={30}
               color={panellist?.color}
               alt="Follow us on Twitter"
-            />
+            /> */}
             <div className={`text-${panellist?.color}`}>{panellist?.name}</div>
             <div>: {panellist?.role}</div>
           </div>
@@ -331,10 +365,12 @@ export const Chat = () => {
           </header>
 
           <main style={{ maxHeight: "500px" }} className="msger-chat overflow-y-scroll">
-            {messages.map(Msg)}
+            {messages.map((m) =>
+              Msg(m, panellists.filter((p) => p.name === m.name)[0]?.color),
+            )}
             {chatLoading && (
               <div className="flex justify-center">
-                <PulseLoader color="#b4b4b4" />
+                <PulseLoader color="#b4b4b4" className="mt-4" />
               </div>
             )}
             <div className="pt-10" ref={messagesEndRef} />
