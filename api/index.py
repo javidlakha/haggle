@@ -117,7 +117,7 @@ characters = [
     },
     {
         "name": "Brian",
-        "role": "Product Manager within Google Pay",
+        "role": "Product Manager within the Google Pay team",
         "accent": Accent.british,
         "personality": "assertive, funny and get unhappy when people waste your time.",
         "color": "orange",
