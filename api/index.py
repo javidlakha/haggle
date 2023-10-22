@@ -108,7 +108,7 @@ characters = [
     {
         "name": "Janet",
         "role": "VP of Engineering within the Google Cloud Platform team",
-        "accent": Accent.american,
+        "accent": Accent.australian_female,
         "personality": "aggressive, impatient and a pedant. You are a stickler for detail.",
         "color": "red",
         "gender": "female",
@@ -117,7 +117,7 @@ characters = [
     {
         "name": "Brian",
         "role": "Product Manager within the Google Pay team",
-        "accent": Accent.british,
+        "accent": Accent.american_male,
         "personality": "assertive, funny and get unhappy when people waste your time.",
         "color": "orange",
         "gender": "male",
@@ -302,7 +302,7 @@ async def submit(recording: UploadFile):
 @app.post("/api/text-to-speech")
 def text_to_speech_endpoint(
     text: str,
-    accent: Accent = Accent.british,
+    accent: Accent = Accent.british_male,
     pitch: float = 0,
     speed: float = 1,
 ):
@@ -318,9 +318,9 @@ async def transcribe_voice_endpoint(recording: UploadFile):
 
 
 # TODO: Remove?
-@app.post("/api/italian-parrot")
+@app.post("/api/parrot")
 async def transcribe_voice_endpoint(recording: UploadFile):
-    """Repeats what you say, but in an Italian accent"""
+    """A female Italian parrot"""
     transcript = speech_to_text(await recording.read())
-    audio = text_to_speech(transcript, Accent.italian, 0, 1)
+    audio = text_to_speech(transcript, Accent.italian_female, 0, 1)
     return {"audio": audio, "transcript": transcript, "type": "audio/mp3"}
