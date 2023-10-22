@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum, unique
 from typing import Any, List
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile
 from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
