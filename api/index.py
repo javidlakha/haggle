@@ -279,7 +279,7 @@ async def generate_next_message(new_message):
 @app.post("/api/chat.submit-message")
 async def submit_message(body: SubmitMessageRequest):
     output, current_character = await generate_next_message(body.message)
-    recording = text_to_speech(output["content"], current_character["accent"], 0, 1.4)
+    recording = text_to_speech(output["content"], current_character["accent"], 0, DEFAULT_SPEED)
     return {
         "message": output["content"],
         "character": current_character,
@@ -291,7 +291,7 @@ async def submit_message(body: SubmitMessageRequest):
 async def submit_audio(recording: UploadFile):
     transcript = speech_to_text(await recording.read())
     output, current_character = await generate_next_message(transcript)
-    audio = text_to_speech(output["content"], current_character["accent"], 0, 1.4)
+    audio = text_to_speech(output["content"], current_character["accent"], 0, DEFAULT_SPEED)
     return {
         "user_message": transcript,
         "message": output["content"],
