@@ -18,6 +18,17 @@ type Message = {
   date: Date
   text: string
 }
+
+function base64ToArrayBuffer(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 function formatDate(date: Date) {
   const h = "0" + date.getHours()
   const m = "0" + date.getMinutes()
@@ -233,6 +244,18 @@ export const Chat = () => {
         throw new Error("Network response was not ok " + response.statusText)
       }
       const data = await response.json()
+
+      // Play response
+      const arrayBuffer = base64ToArrayBuffer(data.recording);
+      const audioContext = new window.AudioContext();
+      let source;
+      audioContext.decodeAudioData(arrayBuffer, (buffer) => {
+        source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+      });
+
       appendMessage({
         name: data.character.name,
         img:
