@@ -12,7 +12,14 @@ Made during the [Oxford Gen AI Summit 2023 Hackathon](https://www.oxgensummit.or
 
 First, download and install [ffmpeg](https://www.ffmpeg.org/).
 
-Then, install the dependencies:
+Then, obtain API keys from OpenAI and Google Cloud Platform and save them to `.env` in the root directory:
+
+```env
+GCP_API_KEY="..."
+OPENAI_API_KEY="..."
+```
+
+Next, install the dependencies:
 
 ```bash
 yarn install
