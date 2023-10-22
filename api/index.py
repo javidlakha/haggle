@@ -1,6 +1,3 @@
-# TODO: EXTREMELY IMPORTANT
-# Remove OPENAI API KEY from api/llm_agent/agent.py directory and sanitise git
-
 import random
 from dataclasses import dataclass, field
 from enum import Enum, unique
@@ -301,7 +298,7 @@ async def submit_audio(recording: UploadFile):
     }
 
 
-# TODO: Endpoint used for testing, may not need to expose this
+# Endpoint used for testing only
 @app.post("/api/text-to-speech")
 def text_to_speech_endpoint(
     text: str,
@@ -313,14 +310,14 @@ def text_to_speech_endpoint(
     return {"audio": audio, "type": "audio/mp3"}
 
 
-# TODO: Endpoint used for testing, may not need to expose this
+# Endpoint used for testing only
 @app.post("/api/transcribe-voice")
 async def transcribe_voice_endpoint(recording: UploadFile):
     transcript = speech_to_text(await recording.read())
     return {"transcript": transcript}
 
 
-# TODO: Remove?
+# Ciao bella
 @app.post("/api/parrot")
 async def transcribe_voice_endpoint(recording: UploadFile):
     """A female Italian parrot"""

@@ -15,24 +15,6 @@ enum RecordingStatus {
   PROCESSING = "processing",
 }
 
-// @ts-ignore
-function base64toBlob(base64, contentType) {
-  const byteCharacters = atob(base64)
-  const byteArrays = []
-
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512)
-    const byteNumbers = new Array(slice.length)
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i)
-    }
-    const byteArray = new Uint8Array(byteNumbers)
-    byteArrays.push(byteArray)
-  }
-
-  return new Blob(byteArrays, { type: contentType })
-}
-
 function base64ToArrayBuffer(base64: string) {
   const binaryString = atob(base64)
   const len = binaryString.length
@@ -43,7 +25,7 @@ function base64ToArrayBuffer(base64: string) {
   return bytes.buffer
 }
 
-export function Record( {appendMessages}) {
+export function Record({ appendMessages }) {
   const [recordingStatus, setRecordingStatus] = useState(RecordingStatus.PENDING)
 
   const uploadRecording = async (recording: Blob) => {

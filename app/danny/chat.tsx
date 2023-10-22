@@ -6,7 +6,7 @@ import { PacmanLoader, PulseLoader } from "react-spinners"
 import { FaRegSadCry } from "react-icons/fa"
 import { BiConversation, BiBeer } from "react-icons/bi"
 import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
-import { Record } from "./record."
+import { Record } from "./record"
 
 type Side = "left" | "right"
 
