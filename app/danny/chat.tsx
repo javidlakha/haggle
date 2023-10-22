@@ -94,7 +94,8 @@ const Msg = (message: Message) => {
 const BOT_IMG = "bot"
 const PERSON_IMG = "person"
 const PERSON_NAME = "Confident-Ally"
-const DEFAULT_CONTEXT = "I'm applying for a job as a software engineer at Meta. I struggle with waffling."
+const DEFAULT_CONTEXT =
+  "I'm applying for a job as a software engineer at Meta. I have enough experience but I get nervous in interviews. I've uploaded my CV."
 
 type Panellist = {
   img: "bot" | "person"
@@ -103,7 +104,6 @@ type Panellist = {
   role: "boss" | "assistant"
   color: "red" | "orange" | "green"
 }
-
 
 export const Chat = () => {
   const [roleplaySetup, setRoleplaySetup] = useState<string>(DEFAULT_CONTEXT)
