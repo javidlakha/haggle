@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import "./chat.css"
 import Image from "next/image"
-import { FadeLoader, PacmanLoader, PulseLoader } from "react-spinners"
+import { FadeLoader, PacmanLoader, PulseLoader, ClimbingBoxLoader } from "react-spinners"
 import { FaRegSadCry } from "react-icons/fa"
 import { BiConversation, BiBeer } from "react-icons/bi"
 import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
@@ -447,68 +447,71 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
           </div>
         )
       })}
-      {isInitialised && (
-        <section className="msger">
-          <header className="msger-header">
-            <div className="msger-header-title">HagglChat</div>
-            <div className="msger-header-options">
-              <span>
-                <i className="fas fa-cog"></i>
-              </span>
-            </div>
-          </header>
-
-          <main style={{ maxHeight: "460px" }} className="msger-chat overflow-y-scroll">
-            {messages.map((m) =>
-              Msg(m, panellists.filter((p) => p.name === m.name)[0]?.color),
-            )}
-            {chatLoading && (
-              <div className="flex justify-center">
-                <PulseLoader color="#b4b4b4" className="mt-4" />
+      {isInitialised &&
+        (panellists && panellists.length ? (
+          <section className="msger">
+            <header className="msger-header">
+              <div className="msger-header-title">HagglChat</div>
+              <div className="msger-header-options">
+                <span>
+                  <i className="fas fa-cog"></i>
+                </span>
               </div>
-            )}
-            <div className="pt-10" ref={messagesEndRef} />
-          </main>
+            </header>
 
-          <form
-            className="msger-inputarea"
-            onSubmit={async (e) => {
-              e.preventDefault()
-              if (!msgText) return
+            <main style={{ maxHeight: "460px" }} className="msger-chat overflow-y-scroll">
+              {messages.map((m) =>
+                Msg(m, panellists.filter((p) => p.name === m.name)[0]?.color),
+              )}
+              {chatLoading && (
+                <div className="flex justify-center">
+                  <PulseLoader color="#b4b4b4" className="mt-4" />
+                </div>
+              )}
+              <div className="pt-10" ref={messagesEndRef} />
+            </main>
 
-              appendMessage({
-                name: personsName,
-                img: PERSON_IMG,
-                side: "right",
-                text: msgText,
-                date: new Date(),
-              })
-              // TODO: see if wait is required here
-              setMsgText("")
+            <form
+              className="msger-inputarea"
+              onSubmit={async (e) => {
+                e.preventDefault()
+                if (!msgText) return
 
-              remoteBotResponse({
-                name: personsName,
-                img: PERSON_IMG,
-                side: "right",
-                text: msgText,
-                date: new Date(),
-              })
-            }}
-          >
-            <input
-              type="text"
-              className="msger-input text-black"
-              placeholder="Enter your message..."
-              value={msgText}
-              onChange={(e) => setMsgText(e.target.value)}
-            />
-            <button type="submit" className="msger-send-btn">
-              Send
-            </button>
-            <Record appendMessages={appendVoiceResponse} />
-          </form>
-        </section>
-      )}
+                appendMessage({
+                  name: personsName,
+                  img: PERSON_IMG,
+                  side: "right",
+                  text: msgText,
+                  date: new Date(),
+                })
+                // TODO: see if wait is required here
+                setMsgText("")
+
+                remoteBotResponse({
+                  name: personsName,
+                  img: PERSON_IMG,
+                  side: "right",
+                  text: msgText,
+                  date: new Date(),
+                })
+              }}
+            >
+              <input
+                type="text"
+                className="msger-input text-black"
+                placeholder="Enter your message..."
+                value={msgText}
+                onChange={(e) => setMsgText(e.target.value)}
+              />
+              <button type="submit" className="msger-send-btn">
+                Send
+              </button>
+              <Record appendMessages={appendVoiceResponse} />
+            </form>
+          </section>
+        ) : (
+          <ClimbingBoxLoader size={100} />
+        ))}
       {isInitialised && messages && messages.length > 3 && (
         <button>
           <div className="flex justify-center">
