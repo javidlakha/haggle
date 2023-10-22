@@ -84,14 +84,14 @@ class Database:
     message_history: List[dict[str, Any]] = field(default_factory=list)
     company: str = COMPANY
     uploaded: bool = False
-    
+
     def upload(self, document, type="cv"):
         self.uploaded = True
         if type == "cv":
             self.cv = document
         else:
             self.job_description = document
-        
+
     def init_chat(self, user_name, user_context, company):
         self.user_name = user_name
         self.user_context = user_context
@@ -99,9 +99,7 @@ class Database:
         if not self.uploaded:
             self.cv = None
         self.message_history = []
-        
 
-    
 
 database = None
 
@@ -113,14 +111,16 @@ characters = [
         "accent": Accent.australian_female,
         "personality": "aggressive, impatient and a pedant. You are a stickler for detail.",
         "color": "red",
+        "gender": "female",
         "img": "bot",
     },
     {
         "name": "Brian",
-        "role": "Product Manager within Google Pay",
+        "role": "Product Manager within the Google Pay team",
         "accent": Accent.american_male,
         "personality": "assertive, funny and get unhappy when people waste your time.",
         "color": "orange",
+        "gender": "male",
         "img": "bot",
     },
 ]
@@ -172,7 +172,7 @@ async def upload_file(file: UploadFile):
         database.upload(doc_string, type="jd")
 
     print("upload:", database)
-    
+
     return {"filename": file.filename}
 
 
@@ -182,12 +182,14 @@ async def init(body: InitChatRequest):
     global database
     if database is None:
         database = Database()
-    
-    database.init_chat(user_name=DEFAULT_NAME, user_context=body.user_context, company=COMPANY)
+
+    database.init_chat(
+        user_name=DEFAULT_NAME, user_context=body.user_context, company=COMPANY
+    )
     user_name = database.user_name
 
     current_character = characters[0]
-    
+
     init_message = f"Hi, {user_name}, welcome to {COMPANY}. Let's go around the table and introduce ourselves. I'm {current_character['name']}, a {current_character['role']}. Could you introduce yourself, {user_name}?"
 
     if database.cv is None:
@@ -201,7 +203,7 @@ async def init(body: InitChatRequest):
     database.message_history.append(initial_message)
     # Hack to clear the database.
     database.uploaded = False
-    
+
     return {
         "initial_message": initial_message,
         "characters": characters,
@@ -225,8 +227,7 @@ async def get_chat_response(messages, model=ModelType.GPT_3_5_TURBO):
     )
 
 
-@app.post("/api/chat.submit")
-async def submit(body: SubmitMessageRequest):
+async def generate_next_message(new_message):
     global database
     messages = database.message_history
     # Want each character to introduce themselves.
@@ -255,26 +256,45 @@ async def submit(body: SubmitMessageRequest):
     if len(messages) < 3:
         system_message += "\n\Have you have introduced yourself to the candidate yet?"
 
-    message = {"role": "user", "content": body.message}
+    message = {"role": "user", "content": new_message}
     messages.append(message)
     _messages = [{"role": "system", "content": system_message}] + [
         {"role": m["role"], "content": m["content"]} for m in messages
     ]
-    
+
     print("What the user sees:", messages, len(messages))
     print("What the model sees:", _messages, len(_messages))
-    
+
     resp = await get_chat_response(_messages)
     output = resp["choices"][0]["message"]
 
     messages.append(output)
+    database.message_history = messages
+    return output, current_character
 
-    recording = text_to_speech(output["content"], current_character["accent"], 0, 1)
 
+@app.post("/api/chat.submit-message")
+async def submit(body: SubmitMessageRequest):
+    output, current_character = await generate_next_message(body.message)
+    recording = text_to_speech(output["content"], current_character["accent"], 0, 1.4)
     return {
         "message": output["content"],
         "character": current_character,
         "recording": recording,
+    }
+
+
+@app.post("/api/chat.submit-audio")
+async def submit(recording: UploadFile):
+    transcript = speech_to_text(await recording.read())
+    output, current_character = await generate_next_message(transcript)
+    audio = text_to_speech(output["content"], current_character["accent"], 0, 1.4)
+    return {
+        "user_message": transcript,
+        "message": output["content"],
+        "character": current_character,
+        "audio": audio,
+        "type": "audio/mp3",
     }
 
 
