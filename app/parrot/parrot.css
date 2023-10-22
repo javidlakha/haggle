@@ -1,4 +1,4 @@
-.record-audio-button button {
+.parrot-audio-button button {
   align-items: center;
   background: none;
   border: none;
@@ -10,11 +10,11 @@
   padding: 10px;
 }
 
-.record-audio-button button:hover {
+.parrot-audio-button button:hover {
   background: #ebedef;
 }
 
-.recording-status {
+.parrot-status {
   align-items: center;
   color: #4a5058;
   display: flex;

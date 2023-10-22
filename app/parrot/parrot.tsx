@@ -1,16 +1,12 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBug,
-  faMicrophone,
-  faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
-import { faStop } from "@fortawesome/free-solid-svg-icons";
-import { useReactMediaRecorder } from "react-media-recorder";
+import { useState } from "react"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faBug, faMicrophone, faSpinner } from "@fortawesome/free-solid-svg-icons"
+import { faStop } from "@fortawesome/free-solid-svg-icons"
+import { useReactMediaRecorder } from "react-media-recorder"
 
-import "./record.css";
+import "./parrot.css"
 
 enum RecordingStatus {
   ERROR = "error",
@@ -19,70 +15,50 @@ enum RecordingStatus {
   PROCESSING = "processing",
 }
 
-// @ts-ignore
-function base64toBlob(base64, contentType) {
-  const byteCharacters = atob(base64);
-  const byteArrays = [];
-
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512);
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
-
-  return new Blob(byteArrays, { type: contentType });
-}
-
 function base64ToArrayBuffer(base64: string) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
+  const binaryString = atob(base64)
+  const len = binaryString.length
+  const bytes = new Uint8Array(len)
   for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+    bytes[i] = binaryString.charCodeAt(i)
   }
-  return bytes.buffer;
+  return bytes.buffer
 }
 
 export function Echo() {
-  const [recordingStatus, setRecordingStatus] = useState(
-    RecordingStatus.PENDING
-  );
+  const [recordingStatus, setRecordingStatus] = useState(RecordingStatus.PENDING)
 
   const uploadRecording = async (recording: Blob) => {
-    setRecordingStatus(RecordingStatus.PROCESSING);
+    setRecordingStatus(RecordingStatus.PROCESSING)
 
     try {
       // Upload file
-      const formData = new FormData();
-      formData.append("recording", recording);
-      const response = await fetch("/api/italian-parrot", {
+      const formData = new FormData()
+      formData.append("recording", recording)
+      const response = await fetch("/api/parrot", {
         method: "POST",
         body: formData,
-      });
+      })
 
       // Play audio
-      const jsonResponse = await response.json();
-      const arrayBuffer = base64ToArrayBuffer(jsonResponse.audio);
-      const audioContext = new window.AudioContext();
-      let source;
+      const jsonResponse = await response.json()
+      const arrayBuffer = base64ToArrayBuffer(jsonResponse.audio)
+      const audioContext = new window.AudioContext()
+      let source
       audioContext.decodeAudioData(arrayBuffer, (buffer) => {
-        source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioContext.destination);
-        source.start(0);
-      });
+        source = audioContext.createBufferSource()
+        source.buffer = buffer
+        source.connect(audioContext.destination)
+        source.start(0)
+      })
 
-      clearBlobUrl();
-      setRecordingStatus(RecordingStatus.PENDING);
+      clearBlobUrl()
+      setRecordingStatus(RecordingStatus.PENDING)
     } catch (err) {
-      console.error(err);
-      setRecordingStatus(RecordingStatus.ERROR);
+      console.error(err)
+      setRecordingStatus(RecordingStatus.ERROR)
     }
-  };
+  }
 
   const { clearBlobUrl, startRecording, stopRecording, mediaBlobUrl } =
     useReactMediaRecorder({
@@ -91,25 +67,23 @@ export function Echo() {
       onStart: () => setRecordingStatus(RecordingStatus.RECORDING),
       onStop: (_, recording) => uploadRecording(recording),
       video: false,
-    });
+    })
 
   const retry = async () => {
-    if (!mediaBlobUrl) return;
-    const audio_blob = await fetch(mediaBlobUrl).then((r) => r.blob());
-    uploadRecording(audio_blob);
-  };
+    if (!mediaBlobUrl) return
+    const audio_blob = await fetch(mediaBlobUrl).then((r) => r.blob())
+    uploadRecording(audio_blob)
+  }
 
   if (recordingStatus === RecordingStatus.ERROR)
     return (
       <div className="record-audio-button">
         <button onClick={retry} title="Retry">
           <FontAwesomeIcon icon={faBug} size="xl" />
-          <div className="button-text">
-            An error occurred. Click here to retry
-          </div>
+          <div className="button-text">An error occurred. Click here to retry</div>
         </button>
       </div>
-    );
+    )
 
   if (recordingStatus === RecordingStatus.RECORDING)
     return (
@@ -119,7 +93,7 @@ export function Echo() {
           <div className="button-text">Stop recording</div>
         </button>
       </div>
-    );
+    )
 
   if (recordingStatus === RecordingStatus.PROCESSING)
     return (
@@ -129,7 +103,7 @@ export function Echo() {
         </div>
         <div>Generating response</div>
       </div>
-    );
+    )
 
   return (
     <div className="record-audio-button">
@@ -138,5 +112,5 @@ export function Echo() {
         <div className="button-text">Parrot</div>
       </button>
     </div>
-  );
+  )
 }
