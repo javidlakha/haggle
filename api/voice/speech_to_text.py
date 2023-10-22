@@ -1,7 +1,7 @@
 import math
 import pathlib
+from io import BytesIO
 from tempfile import TemporaryDirectory
-from uuid import uuid4
 
 import openai
 from pydub import AudioSegment
@@ -11,19 +11,9 @@ from api.settings import OPENAI_API_KEY
 BASE = pathlib.Path(__file__).parent.parent.parent.resolve()
 
 
-def save_recording(recording: bytes) -> str:
-    """Saves an uploaded recording"""
-    recording_path = f"{BASE}/buckets/voice-uploads/{uuid4()}.wav"
-    with open(recording_path, "wb") as f:
-        f.write(recording)
-    return recording_path
-
-
-def speech_to_text(recording_path: str) -> str:
+def speech_to_text(recording: bytes) -> str:
     """Converts an uploaded recording to text"""
-    with open(recording_path, "rb") as f:
-        recording = AudioSegment.from_file(f)
-
+    recording = AudioSegment.from_file(BytesIO(recording))
     transcript = ""
     with TemporaryDirectory() as temp_dir:
         for start_time in range(0, math.ceil(recording.duration_seconds), 60):

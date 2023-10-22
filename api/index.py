@@ -1,29 +1,21 @@
 # TODO: EXTREMELY IMPORTANT
 # Remove OPENAI API KEY from api/llm_agent/agent.py directory and sanitise git
 
+import random
 from dataclasses import dataclass, field
 from enum import Enum, unique
-import json
-import random
 from typing import Any, List
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
-from fastapi import FastAPI, File, UploadFile
-from pathlib import Path
-from api.settings import BASE_PATH, OPENAI_API_KEY
-from api.voice import Accent, text_to_speech
 from langchain.document_loaders import PyMuPDFLoader
 from langchain.document_loaders.image import UnstructuredImageLoader
-from fastapi import FastAPI, UploadFile
-from fastapi.responses import FileResponse
-from langchain.chat_models import ChatOpenAI
-from langchain.chat_models.openai import acompletion_with_retry
 from pydantic import BaseModel
 
-from api.settings import OPENAI_API_KEY
-from api.voice import Accent, save_recording, speech_to_text, text_to_speech
+from api.settings import BASE_PATH, OPENAI_API_KEY
+from api.voice import Accent, speech_to_text, text_to_speech
 
 
 app = FastAPI()
@@ -299,22 +291,14 @@ def text_to_speech_endpoint(
 # TODO: Endpoint used for testing, may not need to expose this
 @app.post("/api/transcribe-voice")
 async def transcribe_voice_endpoint(recording: UploadFile):
-    recording_path = save_recording(await recording.read())
-    transcript = speech_to_text(recording_path)
+    transcript = speech_to_text(await recording.read())
     return {"transcript": transcript}
-
-
-# TODO: Endpoint used for testing, may not need to expose this
-@app.post("/api/upload-voice")
-async def upload_voice_endpoint(recording: UploadFile):
-    recording_path = save_recording(await recording.read())
 
 
 # TODO: Remove?
 @app.post("/api/italian-parrot")
 async def transcribe_voice_endpoint(recording: UploadFile):
     """Repeats what you say, but in an Italian accent"""
-    recording_path = save_recording(await recording.read())
-    transcript = speech_to_text(recording_path)
+    transcript = speech_to_text(await recording.read())
     audio = text_to_speech(transcript, Accent.italian, 0, 1)
     return {"audio": audio, "transcript": transcript, "type": "audio/mp3"}
