@@ -201,6 +201,19 @@ export const Chat = () => {
     }
   }
 
+  async function formSubmit(e) {
+    if (e) {
+      e.preventDefault()
+    }
+    if (!roleplaySetup) {
+      console.log("no roleplay setup")
+      return
+    }
+
+    setIsInitialised(true)
+    initChat(roleplaySetup)
+  }
+
   return (
     <div>
       {!isInitialised && (
@@ -238,13 +251,7 @@ export const Chat = () => {
               style={{
                 borderTop: "none",
               }}
-              onSubmit={async (e) => {
-                e.preventDefault()
-                if (!roleplaySetup) return
-
-                setIsInitialised(true)
-                initChat(roleplaySetup)
-              }}
+              onSubmit={formSubmit}
             >
               <textarea
                 className="msger-input text-black  h-56 w-80 "
@@ -258,7 +265,11 @@ export const Chat = () => {
             </form>
           </section>
           {scenario === "interview" ? <FileUpload /> : <div className="h-20"></div>}
-          <button type="submit" className="msger-send-btn mt-10 h-24 w-48 text-lg">
+          <button
+            type="submit"
+            className="msger-send-btn mt-10 h-24 w-48 text-lg"
+            onClick={formSubmit}
+          >
             BEGIN
           </button>
         </>
