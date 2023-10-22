@@ -1,8 +1,8 @@
 "use client"
-import React, { useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import "./chat.css"
 import Image from "next/image"
-import { PacmanLoader } from "react-spinners"
+import { PacmanLoader, PulseLoader } from "react-spinners"
 import { FaRegSadCry } from "react-icons/fa"
 import { BiConversation, BiBeer } from "react-icons/bi"
 
@@ -145,6 +145,8 @@ export const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [panellists, setPanellists] = useState<Panellist[]>([])
   const [scenario, setScenario] = useState<string>("interview")
+  const [chatLoading, setChatLoading] = useState(false)
+  const messagesEndRef = useRef(null)
 
   async function initChat(message: string) {
     try {
@@ -174,9 +176,23 @@ export const Chat = () => {
 
   function appendMessage(message: Message) {
     setMessages((prev) => [...prev, message])
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
+    })
   }
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
+    })
+  }, [messages, messages.length])
+
   async function remoteBotResponse(message: Message) {
+    setChatLoading(true)
     try {
       const response = await fetch("/api/chat.submit", {
         method: "POST",
@@ -199,6 +215,12 @@ export const Chat = () => {
     } catch (error) {
       console.error("There has been a problem with your fetch operation:", error)
     }
+    setChatLoading(false)
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
+    })
   }
 
   async function formSubmit(e) {
@@ -308,8 +330,14 @@ export const Chat = () => {
             </div>
           </header>
 
-          <main style={{ maxHeight: "500px" }} className="msger-chat overflow-y-scroll ">
+          <main style={{ maxHeight: "500px" }} className="msger-chat overflow-y-scroll">
             {messages.map(Msg)}
+            {chatLoading && (
+              <div className="flex justify-center">
+                <PulseLoader color="#b4b4b4" />
+              </div>
+            )}
+            <div className="pt-10" ref={messagesEndRef} />
           </main>
 
           <form
