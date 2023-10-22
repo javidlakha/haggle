@@ -45,7 +45,7 @@ We are looking for a software engineer with 5 years of experience.
 You will be working on our new product.
 """
 
-DEFAULT_NAME = "Confident-Ally"
+DEFAULT_NAME = "Henry"
 
 SYSTEM_MESSAGE = """
 You are an {character_name}, a {character_role} at {company_name}. You are {character_personality}.

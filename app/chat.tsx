@@ -162,9 +162,9 @@ const Msg = (message: Message, color?: string) => {
 
 const BOT_IMG = "bot"
 const PERSON_IMG = "person"
-const PERSON_NAME = "Confident-Ally"
+const PERSON_NAME = "Henry"
 const DEFAULT_CONTEXT =
-  "I'm applying for a job as a software engineer at Meta. I have enough experience but I get nervous in interviews. I've uploaded my CV."
+  `My name is ${PERSON_NAME} and I am applying for a job as a software engineer at Meta. I have enough experience but I get nervous in interviews. I've uploaded my CV.`
 
 type Panellist = {
   img: "bot" | "person"
