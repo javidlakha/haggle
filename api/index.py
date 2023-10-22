@@ -227,8 +227,8 @@ def text_to_speech_endpoint(
     pitch: float = 0,
     speed: float = 1,
 ):
-    recording = text_to_speech(text, accent, pitch, speed)
-    return {"recording": recording}
+    audio = text_to_speech(text, accent, pitch, speed)
+    return {"audio": audio, "type": "audio/mp3"}
 
 
 # TODO: Endpoint used for testing, may not need to expose this
@@ -236,7 +236,7 @@ def text_to_speech_endpoint(
 async def transcribe_voice_endpoint(recording: UploadFile):
     recording_path = save_recording(await recording.read())
     transcript = speech_to_text(recording_path)
-    print(transcript)
+    return {"transcript": transcript}
 
 
 # TODO: Endpoint used for testing, may not need to expose this
@@ -251,5 +251,5 @@ async def transcribe_voice_endpoint(recording: UploadFile):
     """Repeats what you say, but in an Italian accent"""
     recording_path = save_recording(await recording.read())
     transcript = speech_to_text(recording_path)
-    response_path = text_to_speech(transcript, Accent.italian, 0, 1)
-    return FileResponse(response_path, media_type="audio/mp3")
+    audio = text_to_speech(transcript, Accent.italian, 0, 1)
+    return {"audio": audio, "transcript": transcript, "type": "audio/mp3"}
