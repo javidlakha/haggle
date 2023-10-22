@@ -19,7 +19,7 @@ export default function Home() {
             height={30}
             alt="Follow us on Twitter"
           />
-          Welcome to Haggle where you can practice your skills
+          Welcome to Haggle where you can practice your communication skills in challenging situations.
           <div>
             <Link style={{ position: "fixed", bottom: 0 }} href="parrot">
               <FontAwesomeIcon icon={faCrow} size="xl" />
