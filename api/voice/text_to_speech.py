@@ -5,26 +5,32 @@ import requests
 from api.settings import GCP_API_KEY
 
 ACCENTS = {
-    "american": {"languageCode": "en-US", "name": "en-US-Wavenet-A"},
-    "british": {"languageCode": "en-GB", "name": "en-GB-Wavenet-A"},
-    "french": {"languageCode": "fr-FR", "name": "fr-FR-Wavenet-A"},
-    "german": {"languageCode": "de-DE", "name": "de-DE-Wavenet-A"},
-    "italian": {"languageCode": "it-IT", "name": "it-IT-Wavenet-A"},
+    "australian_female": {"languageCode": "en-AU", "name": "en-AU-Wavenet-C"},
+    "australian_male": {"languageCode": "en-AU", "name": "en-AU-Wavenet-B"},
+    "american_female": {"languageCode": "en-US", "name": "en-US-Wavenet-F"},
+    "american_male": {"languageCode": "en-US", "name": "en-US-Wavenet-J"},
+    "british_female": {"languageCode": "en-GB", "name": "en-GB-Wavenet-F"},
+    "british_male": {"languageCode": "en-GB", "name": "en-GB-Wavenet-B"},
+    "italian_female": {"languageCode": "it-IT", "name": "it-IT-Wavenet-B"},
+    "italian_male": {"languageCode": "it-IT", "name": "it-IT-Wavenet-C"},
 }
 ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize"
 
 
 class Accent(str, Enum):
-    american = "american"
-    british = "british"
-    french = "french"
-    german = "german"
-    italian = "italian"
+    australian_female = "australian_female"
+    australian_male = "australian_male"
+    american_female = "american_female"
+    american_male = "american_male"
+    british_female = "british_female"
+    british_male = "british_male"
+    italian_female = "italian_female"
+    italian_male = "italian_male"
 
 
 def text_to_speech(
     text: str,
-    accent: Accent = Accent.british,
+    accent: Accent = Accent.british_male,
     pitch: float = 0,
     speed: float = 1,
 ) -> str:
