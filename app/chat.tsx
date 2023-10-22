@@ -185,14 +185,14 @@ const SCENARIOS = [
   {
     id: "chat",
     icon: BiConversation,
-    description: "Chat with strangers",
-    text: "I'm approaching a stranger in a bar. I struggle with anxiety when talking to new people.",
+    description: "Company strategy meeting",
+    text: "I'm a SWE in a company strategy meeting with multiple stakeholders. I get nervous when the founder, Sara, questions my ideas.",
   },
   {
     id: "sad",
     icon: FaRegSadCry,
-    description: "Giving bad news",
-    text: "I need to tell a friend some really bad news. I have no idea how to handle it.",
+    description: "Giving negative feedback",
+    text: "I need to tell my coworker, Ally, that they are underperforming. I have no idea how to handle it.",
   },
 ]
 
