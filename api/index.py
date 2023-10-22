@@ -45,7 +45,7 @@ We are looking for a software engineer with 5 years of experience.
 You will be working on our new product.
 """
 
-DEFAULT_NAME = "Henry"
+DEFAULT_NAME = "Confident-Ally"
 
 SYSTEM_MESSAGE = """
 You are an {character_name}, a {character_role} at {company_name}. You are {character_personality}.
@@ -124,6 +124,7 @@ characters = [
 
 DEFAULT_SPEED = 1.3
 
+
 def load_documents(file_path, is_pdf):
     if is_pdf:
         loader = PyMuPDFLoader(file_path)
@@ -174,6 +175,23 @@ async def upload_file(file: UploadFile):
     return {"filename": file.filename}
 
 
+async def get_chat_response(messages, model=ModelType.GPT_3_5_TURBO):
+    llm = ChatOpenAI(
+        client=None,
+        model=model,
+        temperature=0.4,
+        streaming=False,
+        max_retries=3,
+        request_timeout=240,
+        openai_api_key=OPENAI_API_KEY,
+    )
+    return await acompletion_with_retry(
+        llm=llm,
+        model=model,
+        messages=messages,
+    )
+
+
 @app.post("/api/chat.init")
 async def init(body: InitChatRequest):
     # TODO(hm): Get the persons name and company name from the CV/JD.
@@ -181,9 +199,29 @@ async def init(body: InitChatRequest):
     if database is None:
         database = Database()
 
+    cv_snippet = database.cv[0:100] if database.cv else ""
+
+    
+    m = [
+        {
+            "role": "user",
+            "content": (
+                f"I will show you two sources of text. Based on '{body.user_context}' or '{cv_snippet}', "
+                "tell me the person's first name. Do not respond with anything else. If there is no name return ''"
+            ),
+        }
+    ]
+
+    name_resp = (await get_chat_response(m))["choices"][0]["message"]["content"]
+    if name_resp.strip("'") == "":
+        user_name = DEFAULT_NAME
+    else:
+        user_name = name_resp.strip()
+    
     database.init_chat(
-        user_name=DEFAULT_NAME, user_context=body.user_context, company=COMPANY
+        user_name=user_name, user_context=body.user_context, company=COMPANY
     )
+        
     user_name = database.user_name
 
     current_character = characters[0]
@@ -201,29 +239,15 @@ async def init(body: InitChatRequest):
     database.message_history.append(initial_message)
     # Hack to clear the database.
     database.uploaded = False
-    recording = text_to_speech(init_message, current_character["accent"], 0, DEFAULT_SPEED)
+    recording = text_to_speech(
+        init_message, current_character["accent"], 0, DEFAULT_SPEED
+    )
     return {
         "initial_message": initial_message,
         "characters": characters,
         "recording": recording,
+        "human_name": user_name,
     }
-
-
-async def get_chat_response(messages, model=ModelType.GPT_3_5_TURBO):
-    llm = ChatOpenAI(
-        client=None,
-        model=model,
-        temperature=0.4,
-        streaming=False,
-        max_retries=3,
-        request_timeout=240,
-        openai_api_key=OPENAI_API_KEY,
-    )
-    return await acompletion_with_retry(
-        llm=llm,
-        model=model,
-        messages=messages,
-    )
 
 
 async def generate_next_message(new_message):
@@ -269,14 +293,16 @@ async def generate_next_message(new_message):
 
     messages.append(output)
     database.message_history = messages
-    
+
     return output, current_character
 
 
 @app.post("/api/chat.submit-message")
 async def submit_message(body: SubmitMessageRequest):
     output, current_character = await generate_next_message(body.message)
-    recording = text_to_speech(output["content"], current_character["accent"], 0, DEFAULT_SPEED)
+    recording = text_to_speech(
+        output["content"], current_character["accent"], 0, DEFAULT_SPEED
+    )
     return {
         "message": output["content"],
         "character": current_character,
@@ -288,7 +314,9 @@ async def submit_message(body: SubmitMessageRequest):
 async def submit_audio(recording: UploadFile):
     transcript = speech_to_text(await recording.read())
     output, current_character = await generate_next_message(transcript)
-    audio = text_to_speech(output["content"], current_character["accent"], 0, DEFAULT_SPEED)
+    audio = text_to_speech(
+        output["content"], current_character["accent"], 0, DEFAULT_SPEED
+    )
     return {
         "user_message": transcript,
         "message": output["content"],

@@ -164,7 +164,7 @@ const BOT_IMG = "bot"
 const PERSON_IMG = "person"
 const PERSON_NAME = "Henry"
 const DEFAULT_CONTEXT =
-  `My name is ${PERSON_NAME} and I am applying for a job as a software engineer at Meta. I have enough experience but I get nervous in interviews. I've uploaded my CV.`
+  "I'm applying for a job as a software engineer at Meta. I have enough experience but I get nervous in interviews. I've uploaded my CV."
 
 type Panellist = {
   img: "bot" | "person"
@@ -197,6 +197,7 @@ const SCENARIOS = [
 
 export const Chat = () => {
   const [roleplaySetup, setRoleplaySetup] = useState<string>(DEFAULT_CONTEXT)
+  const [personsName, setPersonsName] = useState<string>(PERSON_NAME)
   const [msgText, setMsgText] = useState("")
   const [isInitialised, setIsInitialised] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -227,6 +228,7 @@ export const Chat = () => {
         date: new Date(),
       })
       speak(data.recording)
+      setPersonsName(data.human_name)
     } catch (error) {
       console.error("There has been a problem with your fetch operation:", error)
     }
@@ -316,7 +318,7 @@ export const Chat = () => {
   }
   function appendVoiceResponse(response) {
     appendMessage({
-      name: PERSON_NAME,
+      name: personsName,
       img: PERSON_IMG,
       side: "right",
       text: response.user_message,
@@ -418,7 +420,7 @@ export const Chat = () => {
       {isInitialised && (
         <section className="msger">
           <header className="msger-header">
-            <div className="msger-header-title">HaggleChat</div>
+            <div className="msger-header-title">HagglChat</div>
             <div className="msger-header-options">
               <span>
                 <i className="fas fa-cog"></i>
@@ -445,7 +447,7 @@ export const Chat = () => {
               if (!msgText) return
 
               appendMessage({
-                name: PERSON_NAME,
+                name: personsName,
                 img: PERSON_IMG,
                 side: "right",
                 text: msgText,
@@ -455,7 +457,7 @@ export const Chat = () => {
               setMsgText("")
 
               remoteBotResponse({
-                name: PERSON_NAME,
+                name: personsName,
                 img: PERSON_IMG,
                 side: "right",
                 text: msgText,
