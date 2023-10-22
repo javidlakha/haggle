@@ -7,6 +7,7 @@ import { FaRegSadCry } from "react-icons/fa"
 import { BiConversation, BiBeer } from "react-icons/bi"
 import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
 import { Record } from "./record."
+import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
 
 type Side = "left" | "right"
 
@@ -21,13 +22,13 @@ type Message = {
 }
 
 function base64ToArrayBuffer(base64: string) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
+  const binaryString = atob(base64)
+  const len = binaryString.length
+  const bytes = new Uint8Array(len)
   for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+    bytes[i] = binaryString.charCodeAt(i)
   }
-  return bytes.buffer;
+  return bytes.buffer
 }
 
 function formatDate(date: Date) {
@@ -265,15 +266,15 @@ export const Chat = () => {
       const data = await response.json()
 
       // Play response
-      const arrayBuffer = base64ToArrayBuffer(data.recording);
-      const audioContext = new window.AudioContext();
-      let source;
+      const arrayBuffer = base64ToArrayBuffer(data.recording)
+      const audioContext = new window.AudioContext()
+      let source
       audioContext.decodeAudioData(arrayBuffer, (buffer) => {
-        source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioContext.destination);
-        source.start(0);
-      });
+        source = audioContext.createBufferSource()
+        source.buffer = buffer
+        source.connect(audioContext.destination)
+        source.start(0)
+      })
 
       appendMessage({
         name: data.character.name,
@@ -325,7 +326,6 @@ export const Chat = () => {
       text: response.message,
       date: new Date(),
     })
-
   }
 
   return (
@@ -470,7 +470,7 @@ export const Chat = () => {
             <button type="submit" className="msger-send-btn">
               Send
             </button>
-            <Record appendMessages={appendVoiceResponse}/>
+            <Record appendMessages={appendVoiceResponse} />
           </form>
         </section>
       )}
