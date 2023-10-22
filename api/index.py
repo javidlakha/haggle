@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum, unique
 from typing import Any, List
 
+import openai
 from fastapi import FastAPI, UploadFile
 from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
@@ -18,6 +19,7 @@ from api.settings import BASE_PATH, OPENAI_API_KEY
 from api.voice import Accent, speech_to_text, text_to_speech
 
 
+openai.api_key = OPENAI_API_KEY
 app = FastAPI()
 
 
