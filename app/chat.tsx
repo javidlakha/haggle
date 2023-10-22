@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import "./chat.css"
 import Image from "next/image"
-import { PacmanLoader, PulseLoader } from "react-spinners"
+import { FadeLoader, PacmanLoader, PulseLoader } from "react-spinners"
 import { FaRegSadCry } from "react-icons/fa"
 import { BiConversation, BiBeer } from "react-icons/bi"
 import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
@@ -61,10 +61,11 @@ function nameToIcon(
   } else if (name === "Janet") {
     return <FcBusinesswoman size={30} className={className} />
   } else {
+    const actualName = name === "bot" ? "bot" : "person"
     return (
       <Image
         priority
-        src={`/bot.svg`}
+        src={`/${actualName}.svg`}
         // style={{ color: panellist?.color }}
         className="mt-2 ml-2"
         width={30}
@@ -195,7 +196,7 @@ const SCENARIOS = [
   },
 ]
 
-export const Chat = () => {
+export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) => {
   const [roleplaySetup, setRoleplaySetup] = useState<string>(DEFAULT_CONTEXT)
   const [personsName, setPersonsName] = useState<string>(PERSON_NAME)
   const [msgText, setMsgText] = useState("")
@@ -205,6 +206,35 @@ export const Chat = () => {
   const [scenario, setScenario] = useState<string>("interview")
   const [chatLoading, setChatLoading] = useState(false)
   const messagesEndRef = useRef(null)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+
+  async function generateFeedback() {
+    setFeedbackLoading(true)
+    console.log({ messages })
+    const prompt = `You will be given the transcript of a job interview. Give feedback to ${personsName} on how he could improve his performance in similar situations in the future.
+    Interview transcript:
+    ${messages.map((m) => `${m.name}: ${m.text}`).join("\n")}.
+
+    Return only the feedback for Henry, not the transcript.
+    `
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4",
+        messages: [{ role: "system", content: prompt }],
+        temperature: 0,
+      }),
+    })
+    const data = await response.json()
+    const message = data.choices[0].message.content
+    console.log({ message })
+    setFeedback(message)
+    setFeedbackLoading(false)
+  }
 
   async function initChat(message: string) {
     try {
@@ -254,15 +284,15 @@ export const Chat = () => {
 
   function speak(recording) {
     // Play response
-    const arrayBuffer = base64ToArrayBuffer(recording);
-    const audioContext = new window.AudioContext();
-    let source;
+    const arrayBuffer = base64ToArrayBuffer(recording)
+    const audioContext = new window.AudioContext()
+    let source
     audioContext.decodeAudioData(arrayBuffer, (buffer) => {
-      source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioContext.destination);
-      source.start(0);
-    });
+      source = audioContext.createBufferSource()
+      source.buffer = buffer
+      source.connect(audioContext.destination)
+      source.start(0)
+    })
   }
   async function remoteBotResponse(message: Message) {
     setChatLoading(true)
@@ -478,6 +508,20 @@ export const Chat = () => {
             <Record appendMessages={appendVoiceResponse} />
           </form>
         </section>
+      )}
+      {isInitialised && messages && messages.length > 3 && (
+        <button>
+          <div className="flex mt-10 justify-center">
+            <button
+              className="mt-4 text-black"
+              onClick={() => {
+                generateFeedback()
+              }}
+            >
+              {feedbackLoading ? <FadeLoader /> : "Generate feedback"}
+            </button>
+          </div>
+        </button>
       )}
     </div>
   )
