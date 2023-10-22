@@ -226,6 +226,7 @@ export const Chat = () => {
         text: data.initial_message.content,
         date: new Date(),
       })
+      speak(data.recording)
     } catch (error) {
       console.error("There has been a problem with your fetch operation:", error)
     }
@@ -249,6 +250,18 @@ export const Chat = () => {
     console.log(messages)
   }, [messages, messages.length])
 
+  function speak(recording) {
+    // Play response
+    const arrayBuffer = base64ToArrayBuffer(recording);
+    const audioContext = new window.AudioContext();
+    let source;
+    audioContext.decodeAudioData(arrayBuffer, (buffer) => {
+      source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioContext.destination);
+      source.start(0);
+    });
+  }
   async function remoteBotResponse(message: Message) {
     setChatLoading(true)
     try {
@@ -264,16 +277,7 @@ export const Chat = () => {
       }
       const data = await response.json()
 
-      // Play response
-      const arrayBuffer = base64ToArrayBuffer(data.recording)
-      const audioContext = new window.AudioContext()
-      let source
-      audioContext.decodeAudioData(arrayBuffer, (buffer) => {
-        source = audioContext.createBufferSource()
-        source.buffer = buffer
-        source.connect(audioContext.destination)
-        source.start(0)
-      })
+      speak(body.recording)
 
       appendMessage({
         name: data.character.name,

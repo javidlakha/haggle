@@ -125,6 +125,7 @@ characters = [
     },
 ]
 
+DEFAULT_SPEED = 1.3
 
 def load_documents(file_path, is_pdf):
     if is_pdf:
@@ -203,10 +204,11 @@ async def init(body: InitChatRequest):
     database.message_history.append(initial_message)
     # Hack to clear the database.
     database.uploaded = False
-
+    recording = text_to_speech(init_message, current_character["accent"], 0, DEFAULT_SPEED)
     return {
         "initial_message": initial_message,
         "characters": characters,
+        "recording": recording,
     }
 
 
@@ -270,11 +272,12 @@ async def generate_next_message(new_message):
 
     messages.append(output)
     database.message_history = messages
+    
     return output, current_character
 
 
 @app.post("/api/chat.submit-message")
-async def submit(body: SubmitMessageRequest):
+async def submit_message(body: SubmitMessageRequest):
     output, current_character = await generate_next_message(body.message)
     recording = text_to_speech(output["content"], current_character["accent"], 0, 1.4)
     return {
@@ -285,7 +288,7 @@ async def submit(body: SubmitMessageRequest):
 
 
 @app.post("/api/chat.submit-audio")
-async def submit(recording: UploadFile):
+async def submit_audio(recording: UploadFile):
     transcript = speech_to_text(await recording.read())
     output, current_character = await generate_next_message(transcript)
     audio = text_to_speech(output["content"], current_character["accent"], 0, 1.4)
