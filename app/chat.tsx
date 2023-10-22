@@ -458,7 +458,7 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
             </div>
           </header>
 
-          <main style={{ maxHeight: "500px" }} className="msger-chat overflow-y-scroll">
+          <main style={{ maxHeight: "460px" }} className="msger-chat overflow-y-scroll">
             {messages.map((m) =>
               Msg(m, panellists.filter((p) => p.name === m.name)[0]?.color),
             )}
@@ -511,14 +511,14 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
       )}
       {isInitialised && messages && messages.length > 3 && (
         <button>
-          <div className="flex mt-10 justify-center">
+          <div className="flex justify-center">
             <button
-              className="mt-4 text-black"
+              className="ml-4 mt-2 text-black bg-slate-200"
               onClick={() => {
                 generateFeedback()
               }}
             >
-              {feedbackLoading ? <FadeLoader /> : "Generate feedback"}
+              {feedbackLoading ? <FadeLoader height={20} /> : "Generate feedback"}
             </button>
           </div>
         </button>
