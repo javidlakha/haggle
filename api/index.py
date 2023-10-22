@@ -1,10 +1,13 @@
 # TODO: EXTREMELY IMPORTANT
 # Remove OPENAI API KEY from api/llm_agent/agent.py directory and sanitise git
 
-from enum import Enum, unique
 import random
+from dataclasses import dataclass, field
+from enum import Enum, unique
+from typing import Any, List
 
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI
+from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.openai import acompletion_with_retry
 from langchain.document_loaders import PyMuPDFLoader
@@ -43,18 +46,20 @@ We are looking for a software engineer with 5 years of experience.
 You will be working on our new product.
 """
 
+DEFAULT_NAME = "Confident-Ally"
+
 SYSTEM_MESSAGE = """
 You are an {character_name}, a {character_role} at {company_name}. You are {character_personality}.
 
-Here is the candidate's CV: {cv}
+Here is the candidate's CV/resume: {cv}
 
 Here is the job description: {job_description}
 
 This is some extra context about the candidate: {user_context}
 
-Below, you may see a conversation history between you, the candidate and these other characters: {other_characters}
+Below, you may see a conversation history between you, the candidate and your other colleagues: {other_characters}
 
-Conduct an interview with the candidate. Always stay in character.
+Conduct an interview with the candidate. Make sure to grill them on their resume. Be aggressive if it doesn't match what they say. Always stay in your character.
 """
 
 
@@ -68,26 +73,51 @@ class InitChatRequest(BaseModel):
 
 
 # Fake database.
-cv = DEFAULT_CV
-job_description = DEFAULT_JOB_DESCRIPTION
-user_context = None
-messages = []
+@dataclass
+class Database:
+    user_name: str = None
+    cv: str = None
+    job_description: str = None
+    user_context: str = None
+    message_history: List[dict[str, Any]] = field(default_factory=list)
+    company: str = COMPANY
+    uploaded: bool = False
+    
+    def upload(self, document, type="cv"):
+        self.uploaded = True
+        if type == "cv":
+            self.cv = document
+        else:
+            self.job_description = document
+        
+    def init_chat(self, user_name, user_context, company):
+        self.user_name = user_name
+        self.user_context = user_context
+        self.company = company
+        if not self.uploaded:
+            self.cv = None
+        self.message_history = []
+        
+
+    
+
+database = None
 
 # TODO(hm): Autogenerate these from the JD.
 characters = [
     {
         "name": "Janet",
-        "role": "Head of Engineering",
-        "accent": "British",
-        "personality": "aggressive, impatient and a pedant",
+        "role": "VP of Engineering within the Google Cloud Platform team",
+        "accent": Accent.american,
+        "personality": "aggressive, impatient and a pedant. You are a stickler for detail.",
         "color": "red",
         "img": "bot",
     },
     {
         "name": "Brian",
-        "role": "Product Manager",
-        "accent": "Irish",
-        "personality": "friendly, helpful and a good listener",
+        "role": "Product Manager within Google Pay",
+        "accent": Accent.british,
+        "personality": "assertive, funny and get unhappy when people waste your time.",
         "color": "orange",
         "img": "bot",
     },
@@ -116,6 +146,9 @@ def get_document_string(file_path, is_pdf):
 
 @app.post("/api/chat.upload-doc")
 async def upload_file(file: UploadFile):
+    global database
+    if database is None:
+        database = Database()
     # Define the path to save the file
     file_path = BASE_PATH / f"buckets/document-uploads/{file.filename}"
 
@@ -123,92 +156,124 @@ async def upload_file(file: UploadFile):
         # Use the 'for' syntax to iterate through the file's contents
         buffer.write(await file.read())
 
-    output = get_document_string(str(file_path), is_pdf=file.filename.endswith(".pdf"))
+    doc_string = get_document_string(
+        str(file_path), is_pdf=file.filename.endswith(".pdf")
+    )
 
     with file_path.with_suffix(".txt").open("w") as fp:
-        fp.write(output)
-    if "cv" in file.filename:
-        global cv
-        cv = output
-    else:
-        global job_description
-        job_description = output
+        fp.write(doc_string)
 
+    if "cv" in file.filename:
+        print("Loaded CV")
+        database.upload(doc_string, type="cv")
+    else:
+        database.upload(doc_string, type="jd")
+
+    print("upload:", database)
+    
     return {"filename": file.filename}
 
 
 @app.post("/api/chat.init")
 async def init(body: InitChatRequest):
     # TODO(hm): Get the persons name and company name from the CV/JD.
-    global messages
-    global characters
-    global user_context
+    global database
+    if database is None:
+        database = Database()
     
-    messages = []
-    user_context = body.user_context
+    database.init_chat(user_name=DEFAULT_NAME, user_context=body.user_context, company=COMPANY)
+    user_name = database.user_name
 
-    init_message = f"Hi, Confident-Ally, welcome to {COMPANY}. Shall we begin by doing some introductions?"
+    current_character = characters[0]
+    
+    init_message = f"Hi, {user_name}, welcome to {COMPANY}. Let's go around the table and introduce ourselves. I'm {current_character['name']}, a {current_character['role']}. Could you introduce yourself, {user_name}?"
 
-    if cv is None:
-        init_message += " We see you didn't provide a CV."
+    if database.cv is None:
+        init_message += " I didn't have time to read your CV."
 
     initial_message = {
         "role": "assistant",
         "content": init_message,
-        "character": random.choice(characters),
+        "character": current_character,
     }
-    messages.append(initial_message)
+    database.message_history.append(initial_message)
+    # Hack to clear the database.
+    database.uploaded = False
+    
     return {
         "initial_message": initial_message,
         "characters": characters,
     }
 
 
-@app.post("/api/chat.submit")
-async def submit(body: SubmitMessageRequest):
-    random_character = random.choice(characters)
-    other_characters = ", ".join(
-        [
-            f'{c["name"]}: {c["role"]}'
-            for c in characters
-            if c["name"] != random_character["name"]
-        ]
-    )
-    system_message = SYSTEM_MESSAGE.format(
-        character_name=random_character["name"],
-        character_role=random_character["role"],
-        character_personality=random_character["personality"],
-        company_name=COMPANY,
-        cv=cv,
-        job_description=job_description,
-        user_context=user_context,
-        other_characters=other_characters,
-    )
+async def get_chat_response(messages, model=ModelType.GPT_3_5_TURBO):
     llm = ChatOpenAI(
         client=None,
-        model=ModelType.GPT_3_5_TURBO,
-        temperature=0.0,
+        model=model,
+        temperature=0.4,
         streaming=False,
         max_retries=3,
         request_timeout=240,
         openai_api_key=OPENAI_API_KEY,
     )
-    global messages
+    return await acompletion_with_retry(
+        llm=llm,
+        model=model,
+        messages=messages,
+    )
 
-    messages.append({"role": "user", "content": body.message})
 
+@app.post("/api/chat.submit")
+async def submit(body: SubmitMessageRequest):
+    global database
+    messages = database.message_history
+    # Want each character to introduce themselves.
+    if len(messages) < 3:
+        current_character = characters[len(messages) % len(characters)]
+    else:
+        current_character = random.choice(characters)
+
+    other_characters = ", ".join(
+        [
+            f'{c["name"]}: {c["role"]}'
+            for c in characters
+            if c["name"] != current_character["name"]
+        ]
+    )
+    system_message = SYSTEM_MESSAGE.format(
+        character_name=current_character["name"],
+        character_role=current_character["role"],
+        character_personality=current_character["personality"],
+        company_name=database.company,
+        cv=database.cv,
+        job_description=database.job_description,
+        user_context=database.user_context,
+        other_characters=other_characters,
+    )
+    if len(messages) < 3:
+        system_message += "\n\Have you have introduced yourself to the candidate yet?"
+
+    message = {"role": "user", "content": body.message}
+    messages.append(message)
     _messages = [{"role": "system", "content": system_message}] + [
         {"role": m["role"], "content": m["content"]} for m in messages
     ]
-
-    resp = await acompletion_with_retry(
-        llm=llm,
-        model=ModelType.GPT_3_5_TURBO,
-        messages=_messages,
-    )
+    
+    print("What the user sees:", messages, len(messages))
+    print("What the model sees:", _messages, len(_messages))
+    
+    resp = await get_chat_response(_messages)
     output = resp["choices"][0]["message"]
+
     messages.append(output)
-    return {"message": output["content"], "character": random_character}
+
+    recording = text_to_speech(output["content"], current_character["accent"], 0, 1)
+
+    return {
+        "message": output["content"],
+        "character": current_character,
+        "recording": recording,
+    }
 
 
 # TODO: Endpoint used for testing, may not need to expose this
