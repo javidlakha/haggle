@@ -2,7 +2,9 @@
 import React, { useState } from "react"
 import "./chat.css"
 import Image from "next/image"
-import { outdent } from "outdent"
+import { PacmanLoader } from "react-spinners"
+import { FaRegSadCry } from "react-icons/fa"
+import { BiConversation, BiBeer } from "react-icons/bi"
 
 type Side = "left" | "right"
 
@@ -22,6 +24,7 @@ function formatDate(date: Date) {
 
 function FileUpload() {
   const [selectedFile, setSelectedFile] = useState(null)
+  const [CVLoading, setCVLoading] = useState(false)
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
@@ -30,6 +33,7 @@ function FileUpload() {
 
   const handleUpload = async () => {
     if (selectedFile) {
+      setCVLoading(true)
       const formData = new FormData()
       formData.append("file", selectedFile)
 
@@ -48,16 +52,24 @@ function FileUpload() {
       } catch (error) {
         console.error("There has been a problem with your fetch operation:", error)
       }
+      // wait half a second
+      await new Promise((r) => setTimeout(r, 1000)).then((_) => setCVLoading(false))
     }
   }
 
   return (
-    <div className="file-upload">
-      <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload} disabled={!selectedFile}>
-        Upload
-      </button>
-      {selectedFile && <p>Selected file: {selectedFile.name}</p>}
+    <div className="text-black file-upload h-20">
+      <div className="flex">
+        <input className="pl-3 pt-2" type="file" onChange={handleFileChange} />
+        {CVLoading ? (
+          <PacmanLoader color="#579ffb" />
+        ) : (
+          <button className="pt-2" onClick={handleUpload} disabled={!selectedFile}>
+            Upload
+          </button>
+        )}
+      </div>
+      {selectedFile && <p className="pl-3">Selected file: {selectedFile.name}</p>}
     </div>
   )
 }
@@ -105,12 +117,34 @@ type Panellist = {
   color: "red" | "orange" | "green"
 }
 
+const SCENARIOS = [
+  {
+    id: "interview",
+    icon: BiBeer,
+    description: "Panel job interview",
+    text: "I'm applying for a job as a software engineer at Meta. I have enough experience but I get nervous in interviews. I've uploaded my CV.",
+  },
+  {
+    id: "chat",
+    icon: BiConversation,
+    description: "Chat with strangers",
+    text: "I'm approaching a stranger in a bar. I struggle with anxiety when talking to new people.",
+  },
+  {
+    id: "sad",
+    icon: FaRegSadCry,
+    description: "Giving bad news",
+    text: "I need to tell a friend some really bad news. I have no idea how to handle it.",
+  },
+]
+
 export const Chat = () => {
   const [roleplaySetup, setRoleplaySetup] = useState<string>(DEFAULT_CONTEXT)
   const [msgText, setMsgText] = useState("")
   const [isInitialised, setIsInitialised] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [panellists, setPanellists] = useState<Panellist[]>([])
+  const [scenario, setScenario] = useState<string>("interview")
 
   async function initChat(message: string) {
     try {
@@ -171,16 +205,39 @@ export const Chat = () => {
     <div>
       {!isInitialised && (
         <>
-          <section className="msger">
-            <header className="msger-header">
+          <div className="flex">
+            {" "}
+            {SCENARIOS.map((s) => (
+              <div className="text-black m-4 border-gray-400" key={s.id}>
+                <button
+                  key={"button" + s.id}
+                  onClick={() => {
+                    setScenario(s.id)
+                    setRoleplaySetup(s.text)
+                  }}
+                  style={{
+                    border: scenario === s.id ? "2px solid black" : "2px solid white",
+                  }}
+                >
+                  {<s.icon size={30} />}
+                </button>
+                <span className="ml-2">{s.description}</span>
+              </div>
+            ))}
+          </div>
+          <section className="msger" style={{ background: "#eee", maxWidth: "500px" }}>
+            {/* <header className="msger-header">
               <div className="msger-header-options">
                 <span>
                   <i className="fas fa-cog"></i>
                 </span>
               </div>
-            </header>
+            </header> */}
             <form
-              className="msger-inputarea"
+              className="msger-inputarea h-64 w-96 p-0"
+              style={{
+                borderTop: "none",
+              }}
               onSubmit={async (e) => {
                 e.preventDefault()
                 if (!roleplaySetup) return
@@ -190,17 +247,20 @@ export const Chat = () => {
               }}
             >
               <textarea
-                className="msger-input text-black"
+                className="msger-input text-black  h-56 w-80 "
                 style={{ margin: "auto" }}
                 value={roleplaySetup}
                 onChange={(e) => setRoleplaySetup(e.target.value)}
               />
-              <button type="submit" className="msger-send-btn">
+              {/* <button type="submit" className="msger-send-btn mt-2 h-56">
                 Send
-              </button>
+              </button> */}
             </form>
           </section>
-          <FileUpload />
+          {scenario === "interview" ? <FileUpload /> : <div className="h-20"></div>}
+          <button type="submit" className="msger-send-btn mt-10 h-24 w-48 text-lg">
+            BEGIN
+          </button>
         </>
       )}
       {panellists.map((panellist) => {
