@@ -7,7 +7,6 @@ import { FaRegSadCry } from "react-icons/fa"
 import { BiConversation, BiBeer } from "react-icons/bi"
 import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
 import { Record } from "./record."
-import { FcBusinesswoman, FcBusinessman } from "react-icons/fc"
 
 type Side = "left" | "right"
 
