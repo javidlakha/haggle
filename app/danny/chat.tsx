@@ -36,7 +36,25 @@ function formatDate(date: Date) {
   return `${h.slice(-2)}:${m.slice(-2)}`
 }
 
-function nameToIcon(name: MessageImg, className?: string): React.ReactNode {
+function nameToIcon(
+  name: MessageImg,
+  heading: boolean,
+  className?: string,
+): React.ReactNode {
+  if (heading) {
+    return (
+      <Image
+        priority
+        src={`/${name}.jpeg`}
+        // style={{ color: panellist?.color }}
+        className="mt-2 ml-2"
+        width={69}
+        height={69}
+        // color={panellist?.color}
+        alt="Follow us on Twitter"
+      />
+    )
+  }
   if (name === "Brian") {
     return <FcBusinessman size={30} className={className} />
   } else if (name === "Janet") {
@@ -116,7 +134,7 @@ const Msg = (message: Message, color?: string) => {
         className="msg-img"
         // style="background-image: url(${img})" TODO
       >
-        {nameToIcon(message.name, "mt-2 ml-2")}
+        {nameToIcon(message.name, false, "mt-2 ml-2")}
         {/* <Image
           priority
           src={`/${message.img}.svg`}
@@ -360,7 +378,7 @@ export const Chat = () => {
             style={{ color: panellist?.color }}
             className={`text-${panellist?.color} flex items-center gap-2`}
           >
-            <div className="mt-2 ml-2">{nameToIcon(panellist?.name)}</div>
+            <div className="mt-2 ml-2">{nameToIcon(panellist?.name, true)}</div>
             {/* <Image
               priority
               src={`/${panellist?.img}.svg`}
