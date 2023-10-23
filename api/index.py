@@ -304,7 +304,6 @@ async def submit_message(body: SubmitMessageRequest):
         "message": output["content"],
         "character": current_character,
         "recording": recording,
-        "type": "mp3",
     }
 
 

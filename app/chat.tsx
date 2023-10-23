@@ -238,6 +238,7 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
       }),
     })
     const data = await response.json()
+    console.log({ data })
     const message = data.choices[0].message.content
     console.log({ message })
     setFeedback(message)
@@ -523,12 +524,16 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
         <button>
           <div className="flex justify-center">
             <button
-              className="ml-4 mt-2 text-black bg-slate-200"
+              className="feedback-button"
               onClick={() => {
                 generateFeedback()
               }}
             >
-              {feedbackLoading ? <FadeLoader height={20} /> : "Generate feedback"}
+              {feedbackLoading ? (
+                <FadeLoader color="#ffffff" height={20} />
+              ) : (
+                "Generate Feedback"
+              )}
             </button>
           </div>
         </button>
