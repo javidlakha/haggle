@@ -80,10 +80,13 @@ function nameToIcon(
 function FileUpload() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [CVLoading, setCVLoading] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false) // Added state variable
+
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
     setSelectedFile(file)
+    setUploadSuccess(false) // Reset the success status when a new file is selected
   }
 
   const handleUpload = async () => {
@@ -104,6 +107,8 @@ function FileUpload() {
 
         const data = await response.json()
         console.log("File uploaded:", data.filename)
+        // Set the upload success status to true
+        setUploadSuccess(true);
       } catch (error) {
         console.error("There has been a problem with your fetch operation:", error)
       }
@@ -119,12 +124,15 @@ function FileUpload() {
         {CVLoading ? (
           <PacmanLoader color="#579ffb" />
         ) : (
-          <button className="pt-2" onClick={handleUpload} disabled={!selectedFile}>
-            Upload
-          </button>
+          <>
+            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={handleUpload} disabled={!selectedFile}>
+              Upload
+            </button>
+            {uploadSuccess && <p className="pl-3 text-green-500">Document successfully uploaded</p>} 
+          </>
         )}
       </div>
-      {selectedFile && <p className="pl-3">Selected file: {selectedFile.name}</p>}
+      {/* {selectedFile && <p className="pl-3">Selected file: {selectedFile.name}</p>} */}
     </div>
   )
 }
@@ -416,7 +424,7 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
           {scenario === "interview" ? <FileUpload /> : <div className="h-20"></div>}
           <button
             type="submit"
-            className="msger-send-btn mt-10 h-24 w-48 text-lg"
+            className="msger-send-btn mt-10 h-16 w-32 text-lg bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded"
             onClick={formSubmit}
           >
             BEGIN

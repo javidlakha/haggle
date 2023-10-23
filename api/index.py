@@ -164,7 +164,7 @@ async def upload_file(file: UploadFile):
     with file_path.with_suffix(".txt").open("w") as fp:
         fp.write(doc_string)
 
-    if "cv" in file.filename:
+    if any(keyword in file.filename.lower() for keyword in ["cv", "resume"]):
         print("Loaded CV")
         database.upload(doc_string, type="cv")
     else:
@@ -201,7 +201,7 @@ async def init(body: InitChatRequest):
 
     cv_snippet = database.cv[0:100] if database.cv else ""
 
-    
+    print("cv snippet:", cv_snippet)
     m = [
         {
             "role": "user",
