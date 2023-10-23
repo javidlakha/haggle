@@ -451,7 +451,7 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
         (panellists && panellists.length ? (
           <section className="msger">
             <header className="msger-header">
-              <div className="msger-header-title">HagglChat</div>
+              <div className="msger-header-title">HaggleChat</div>
               <div className="msger-header-options">
                 <span>
                   <i className="fas fa-cog"></i>
