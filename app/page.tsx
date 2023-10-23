@@ -22,8 +22,7 @@ export default function Home() {
             height={30}
             alt="Follow us on Twitter"
           />
-          Welcome to Haggle where you can practice your skills in difficult scenarios,
-          whatever they may be.{" "}
+          Welcome to Haggle, a virtual environment that helps you practice your communication skills in stressful situations, such as job interviews.{" "}
           <div>
             <Link style={{ position: "fixed", bottom: 0 }} href="parrot">
               <FontAwesomeIcon icon={faCrow} size="xl" />
