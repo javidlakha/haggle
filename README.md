@@ -6,7 +6,7 @@
 
 <br/>
 
-Made during the [Oxford Gen AI Summit 2023 Hackathon](https://www.oxgensummit.org/).
+Overall Winner of the [Oxford Gen AI Summit 2023 Hackathon](https://www.oxgensummit.org/). Check out the demo [here](https://www.youtube.com/watch?v=xUhfnMYS4zg).
 
 ## Deploy
 
