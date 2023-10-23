@@ -136,7 +136,6 @@ def load_documents(file_path, is_pdf):
 
 
 def get_document_string(file_path, is_pdf):
-    print("file path is: ", file_path)
     documents = load_documents(file_path, is_pdf)
     document_str = ""
     for doc in documents:
@@ -171,7 +170,6 @@ async def upload_file(file: UploadFile):
         database.upload(doc_string, type="jd")
 
     print("upload:", database)
-
     return {"filename": file.filename}
 
 
@@ -200,8 +198,6 @@ async def init(body: InitChatRequest):
         database = Database()
 
     cv_snippet = database.cv[0:100] if database.cv else ""
-
-    print("cv snippet:", cv_snippet)
     m = [
         {
             "role": "user",
@@ -304,9 +300,11 @@ async def submit_message(body: SubmitMessageRequest):
         output["content"], current_character["accent"], 0, DEFAULT_SPEED
     )
     return {
+        "user_message": body.message,
         "message": output["content"],
         "character": current_character,
         "recording": recording,
+        "type": "mp3",
     }
 
 

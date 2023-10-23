@@ -316,8 +316,7 @@ export const Chat = ({ setFeedback }: { setFeedback: (arg0: string) => void }) =
         throw new Error("Network response was not ok " + response.statusText)
       }
       const data = await response.json()
-
-      speak(body.recording)
+      speak(data.recording)
 
       appendMessage({
         name: data.character.name,
